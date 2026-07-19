@@ -1,0 +1,56 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.19/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.19",
+  "version": "1.0.0",
+  "id": "${{BOT_ID}}",
+  "developer": {
+    "name": "AI Teammate Team",
+    "websiteUrl": "https://github.com/your-org/teams-ai-teammate",
+    "privacyUrl": "https://github.com/your-org/teams-ai-teammate/blob/main/PRIVACY.md",
+    "termsOfUseUrl": "https://github.com/your-org/teams-ai-teammate/blob/main/TERMS.md"
+  },
+  "name": {
+    "short": "AI Teammate",
+    "full": "AI Teammate - Tacit Knowledge Accumulator"
+  },
+  "description": {
+    "short": "会議中の暗黙知を自動蓄積するAIチームメイト",
+    "full": "Teams会議にAIチームメイトとして参加し、リアルタイムで会話を分析。追加質問や議題提案を行い、暗黙知をナレッジベースに自動蓄積します。"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#5B5FC7",
+  "bots": [
+    {
+      "botId": "${{BOT_ID}}",
+      "scopes": ["team", "personal", "groupChat"],
+      "supportsFiles": false,
+      "isNotificationOnly": false,
+      "commandLists": [
+        {
+          "scopes": ["groupChat"],
+          "commands": [
+            { "title": "join", "description": "会議に参加してトランスクリプト分析を開始" },
+            { "title": "status", "description": "現在の分析状態を表示" },
+            { "title": "summarize", "description": "これまでの会話サマリーを表示" },
+            { "title": "knowledge", "description": "蓄積されたナレッジを表示" },
+            { "title": "settings", "description": "エージェント設定を変更" }
+          ]
+        }
+      ]
+    }
+  ],
+  "configurableTabs": [
+    {
+      "configurationUrl": "https://${{HOSTNAME}}/configure",
+      "canUpdateConfiguration": true,
+      "scopes": ["groupChat"],
+      "meetingSurfaces": ["sidePanel"],
+      "context": ["meetingSidePanel"]
+    }
+  ],
+  "permissions": ["identity", "messageTeamMembers"],
+  "validDomains": ["${{HOSTNAME}}"]
+}

@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TeamsAITeammate.Agent/TeamsAITeammate.Agent.csproj" />
+    <Project Path="src/TeamsAITeammate.AI/TeamsAITeammate.AI.csproj" />
+    <Project Path="src/TeamsAITeammate.Core/TeamsAITeammate.Core.csproj" />
+    <Project Path="src/TeamsAITeammate.Infrastructure/TeamsAITeammate.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TeamsAITeammate.AIQualityTests/TeamsAITeammate.AIQualityTests.csproj" />
+    <Project Path="tests/TeamsAITeammate.E2ETests/TeamsAITeammate.E2ETests.csproj" />
+    <Project Path="tests/TeamsAITeammate.IntegrationTests/TeamsAITeammate.IntegrationTests.csproj" />
+    <Project Path="tests/TeamsAITeammate.UnitTests/TeamsAITeammate.UnitTests.csproj" />
+  </Folder>
+</Solution>

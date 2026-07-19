@@ -1,0 +1,134 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  NODE_VERSION: '22'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-quality: 'preview'
+
+      - name: Restore dependencies
+        run: dotnet restore TeamsAITeammate.sln
+        working-directory: TeamsAITeammate
+
+      - name: Build
+        run: dotnet build TeamsAITeammate.sln --no-restore -c Release
+        working-directory: TeamsAITeammate
+
+      - name: Run Unit Tests
+        run: dotnet test tests/TeamsAITeammate.UnitTests/TeamsAITeammate.UnitTests.csproj --no-build -c Release --logger "trx;LogFileName=unit-test-results.trx" --collect:"XPlat Code Coverage"
+        working-directory: TeamsAITeammate
+
+      - name: Run Integration Tests
+        run: dotnet test tests/TeamsAITeammate.IntegrationTests/TeamsAITeammate.IntegrationTests.csproj --no-build -c Release --logger "trx;LogFileName=integration-test-results.trx"
+        working-directory: TeamsAITeammate
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: TeamsAITeammate/**/TestResults/**/*.trx
+
+  build-sidepanel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Check SidePanel exists
+        id: check-sidepanel
+        run: |
+          if [ -d "TeamsAITeammate/src/TeamsAITeammate.SidePanel" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install dependencies
+        if: steps.check-sidepanel.outputs.exists == 'true'
+        run: npm ci
+        working-directory: TeamsAITeammate/src/TeamsAITeammate.SidePanel
+
+      - name: Build SidePanel
+        if: steps.check-sidepanel.outputs.exists == 'true'
+        run: npm run build
+        working-directory: TeamsAITeammate/src/TeamsAITeammate.SidePanel
+
+  validate-bicep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure CLI Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Lint Bicep
+        run: az bicep build --file infra/main.bicep
+        working-directory: TeamsAITeammate
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [build-and-test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET (for restore)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-quality: 'preview'
+
+      - name: Build Docker image
+        run: docker build -t teams-ai-teammate:${{ github.sha }} -f Dockerfile .
+        working-directory: TeamsAITeammate
+
+  codeql-analysis:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: csharp
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-quality: 'preview'
+
+      - name: Build for CodeQL
+        run: dotnet build TeamsAITeammate.sln -c Release
+        working-directory: TeamsAITeammate
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
