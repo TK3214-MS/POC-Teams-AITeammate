@@ -12,7 +12,10 @@ public class MeetingSessionTests
         Assert.NotNull(session.Id);
         Assert.NotEmpty(session.Id);
         Assert.Equal(MeetingStatus.Scheduled, session.Status);
+        Assert.Equal(SessionState.Joining, session.State);
         Assert.Empty(session.Participants);
+        Assert.Null(session.JoinedAt);
+        Assert.Null(session.Context);
     }
 
     [Fact]
@@ -23,13 +26,32 @@ public class MeetingSessionTests
             TenantId = "tenant-1",
             MeetingId = "meeting-1",
             Subject = "Sprint Review",
-            Status = MeetingStatus.InProgress
+            Status = MeetingStatus.InProgress,
+            State = SessionState.Active,
+            JoinedAt = DateTimeOffset.UtcNow,
+            Context = new MeetingContext { ChatId = "chat-1", ThreadId = "thread-1" },
         };
 
         Assert.Equal("tenant-1", session.TenantId);
         Assert.Equal("meeting-1", session.MeetingId);
         Assert.Equal("Sprint Review", session.Subject);
         Assert.Equal(MeetingStatus.InProgress, session.Status);
+        Assert.Equal(SessionState.Active, session.State);
+        Assert.NotNull(session.JoinedAt);
+        Assert.Equal("chat-1", session.Context!.ChatId);
+    }
+
+    [Fact]
+    public void SessionState_ShouldContainExpectedValues()
+    {
+        var states = Enum.GetValues<SessionState>();
+
+        Assert.Contains(SessionState.Joining, states);
+        Assert.Contains(SessionState.Active, states);
+        Assert.Contains(SessionState.Analyzing, states);
+        Assert.Contains(SessionState.Paused, states);
+        Assert.Contains(SessionState.Leaving, states);
+        Assert.Contains(SessionState.Completed, states);
     }
 }
 
