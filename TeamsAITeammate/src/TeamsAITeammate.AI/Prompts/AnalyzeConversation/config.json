@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "description": "Analyze a meeting conversation to detect topics, decisions, action items, and tacit knowledge.",
+  "execution_settings": {
+    "default": {
+      "max_tokens": 4096,
+      "temperature": 0.3
+    }
+  },
+  "input_variables": [
+    { "name": "transcript", "description": "Formatted meeting transcript" },
+    { "name": "meetingSubject", "description": "Meeting subject" },
+    { "name": "participants", "description": "Comma-separated participant names" },
+    { "name": "language", "description": "Detected language of the conversation" },
+    { "name": "priorKnowledge", "description": "Related knowledge from previous meetings" }
+  ]
+}

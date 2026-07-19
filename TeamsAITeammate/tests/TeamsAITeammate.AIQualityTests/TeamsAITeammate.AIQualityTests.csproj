@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\TeamsAITeammate.AI\TeamsAITeammate.AI.csproj" />
+    <ProjectReference Include="..\..\src\TeamsAITeammate.Core\TeamsAITeammate.Core.csproj" />
   </ItemGroup>
 
 </Project>

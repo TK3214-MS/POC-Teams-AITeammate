@@ -7,14 +7,24 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="TeamsAITeammate.UnitTests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Azure.AI.OpenAI" Version="*-*" />
     <PackageReference Include="Azure.Identity" Version="*-*" />
     <PackageReference Include="Microsoft.SemanticKernel" Version="*-*" />
     <PackageReference Include="Microsoft.Extensions.AI" Version="*-*" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="*-*" />
+    <PackageReference Include="Polly" Version="*-*" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\TeamsAITeammate.Core\TeamsAITeammate.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Prompts\**\*" />
   </ItemGroup>
 
 </Project>

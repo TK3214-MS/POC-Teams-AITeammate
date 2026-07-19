@@ -1,6 +1,10 @@
+using Azure.AI.OpenAI;
 using Azure.Identity;
 using Azure.Storage.Blobs;
 using Microsoft.Agents.Hosting.AspNetCore;
+using Microsoft.Extensions.AI;
+using Microsoft.SemanticKernel;
+using TeamsAITeammate.Agent.Hubs;
 using TeamsAITeammate.AI.Services;
 using TeamsAITeammate.Core.Interfaces;
 using TeamsAITeammate.Infrastructure.Repositories;
@@ -10,6 +14,33 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddAgentDefaults()
     .AddAgent<TeammateAgent>();
+
+// Azure OpenAI + Semantic Kernel
+var aoaiEndpoint = builder.Configuration["AzureOpenAI:Endpoint"]!;
+var primaryDeployment = builder.Configuration["AzureOpenAI:DeploymentName"] ?? "gpt-55";
+var fallbackDeployment = builder.Configuration["AzureOpenAI:FallbackDeploymentName"] ?? "gpt-41";
+var credential = new DefaultAzureCredential();
+
+builder.Services.AddKernel()
+    .AddAzureOpenAIChatCompletion(
+        deploymentName: primaryDeployment,
+        endpoint: aoaiEndpoint,
+        credentials: credential)
+    .AddAzureOpenAIEmbeddingGenerator(
+        deploymentName: "text-embedding-3-large",
+        endpoint: aoaiEndpoint,
+        credential: credential);
+
+// Microsoft.Extensions.AI — Resilient chat client with fallback
+builder.Services.AddSingleton<IChatClient>(sp =>
+{
+    var azureClient = new AzureOpenAIClient(new Uri(aoaiEndpoint), credential);
+    var primaryClient = azureClient.GetChatClient(primaryDeployment).AsIChatClient();
+    var fallbackClient = azureClient.GetChatClient(fallbackDeployment).AsIChatClient();
+    return new ResilientChatClient(
+        primaryClient, fallbackClient,
+        sp.GetRequiredService<ILogger<ResilientChatClient>>());
+});
 
 // Core services
 builder.Services.AddSingleton<IAnalysisEngine, AnalysisEngine>();
@@ -33,7 +64,7 @@ builder.Services.AddSingleton(sp =>
 {
     var endpoint = builder.Configuration["BlobStorage:Endpoint"];
     if (!string.IsNullOrEmpty(endpoint))
-        return new BlobServiceClient(new Uri(endpoint), new DefaultAzureCredential());
+        return new BlobServiceClient(new Uri(endpoint), credential);
     var connectionString = builder.Configuration["BlobStorage:ConnectionString"]
         ?? "UseDevelopmentStorage=true";
     return new BlobServiceClient(connectionString);
@@ -41,11 +72,25 @@ builder.Services.AddSingleton(sp =>
 builder.Services.AddSingleton<ITranscriptPersistence, TranscriptPersistenceService>();
 builder.Services.AddHostedService<TranscriptPipelineOrchestrator>();
 
+// Phase 4 services — AI Analysis Engine
+builder.Services.AddSingleton<IConversationAnalyzer, ConversationAnalyzer>();
+builder.Services.AddSingleton<IQuestionGenerator, QuestionGenerator>();
+builder.Services.AddSingleton<ITacitKnowledgeExtractor, TacitKnowledgeExtractor>();
+builder.Services.AddSingleton<IAnalysisScheduler, AnalysisScheduler>();
+
+// Phase 5 services — Agent Intervention & UI
+builder.Services.AddSingleton<INotificationThrottler, NotificationThrottler>();
+builder.Services.AddSingleton<IMessageFormatter, MessageFormatter>();
+builder.Services.AddSingleton<ICardActionHandler, CardActionHandler>();
+builder.Services.AddSingleton<IInterventionOrchestrator, InterventionOrchestrator>();
+builder.Services.AddSignalR();
+
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
 app.UseAgents();
+app.MapHub<MeetingAnalysisHub>("/hubs/meeting-analysis");
 app.MapHealthChecks("/healthz");
 
 app.Run();

@@ -5,9 +5,10 @@ using Microsoft.Agents.Core.Models;
 using Microsoft.Agents.Extensions.Teams;
 using TeamsAITeammate.Core.Interfaces;
 using TeamsAITeammate.Core.Models;
+using TeamsAITeammate.Infrastructure.Services;
 
 /// <summary>
-/// AI Teammate bot — handles Teams messages, meeting events, and commands.
+/// AI Teammate bot — handles Teams messages, meeting events, commands, and Adaptive Card actions.
 /// </summary>
 public class TeammateAgent : AgentApplication
 {
@@ -18,6 +19,8 @@ public class TeammateAgent : AgentApplication
     private readonly IKnowledgeRepository _knowledge;
     private readonly ICommandParser _commandParser;
     private readonly IInterventionTimer _interventionTimer;
+    private readonly IInterventionOrchestrator _interventionOrchestrator;
+    private readonly ICardActionHandler _cardActionHandler;
     private readonly ILogger<TeammateAgent> _logger;
 
     public TeammateAgent(
@@ -29,6 +32,8 @@ public class TeammateAgent : AgentApplication
         IKnowledgeRepository knowledge,
         ICommandParser commandParser,
         IInterventionTimer interventionTimer,
+        IInterventionOrchestrator interventionOrchestrator,
+        ICardActionHandler cardActionHandler,
         ILogger<TeammateAgent> logger)
         : base(options)
     {
@@ -39,6 +44,8 @@ public class TeammateAgent : AgentApplication
         _knowledge = knowledge;
         _commandParser = commandParser;
         _interventionTimer = interventionTimer;
+        _interventionOrchestrator = interventionOrchestrator;
+        _cardActionHandler = cardActionHandler;
         _logger = logger;
 
         // Conversation lifecycle
@@ -50,6 +57,9 @@ public class TeammateAgent : AgentApplication
 
         // Meeting lifecycle events
         OnActivity(ActivityTypes.Event, OnEventActivityAsync);
+
+        // Adaptive Card invoke actions
+        OnActivity(ActivityTypes.Invoke, OnInvokeActivityAsync);
     }
 
     private async Task OnMembersAddedAsync(ITurnContext turnContext, ITurnState turnState, CancellationToken ct)
@@ -292,12 +302,35 @@ public class TeammateAgent : AgentApplication
 
     private static string HandleSettingsCommand()
     {
+        var settingsCard = AdaptiveCardTemplates.BuildSettingsCard(new InterventionSettings(), "ja");
+        // Return text summary — the card would be sent via the graph client in a full implementation
         return "⚙️ 設定変更:\n" +
                "- 沈黙検知閾値: 30秒\n" +
                "- 定期分析間隔: 5分\n" +
                "- プロアクティブ介入: 有効\n" +
                "- 最大介入回数: 20回/会議\n\n" +
                "設定の変更はサイドパネルから行えます。";
+    }
+
+    private async Task OnInvokeActivityAsync(ITurnContext turnContext, ITurnState turnState, CancellationToken ct)
+    {
+        var activity = turnContext.Activity;
+        if (activity.Name != "adaptiveCard/action") return;
+
+        var value = activity.Value as Newtonsoft.Json.Linq.JObject
+                    ?? Newtonsoft.Json.Linq.JObject.FromObject(activity.Value ?? new object());
+
+        var verb = value["action"]?["verb"]?.ToString() ?? string.Empty;
+        var data = value["action"]?["data"]?.ToObject<Dictionary<string, object>>() ?? [];
+
+        var meetingId = activity.Conversation?.Id ?? string.Empty;
+        var session = await _sessionManager.GetActiveSessionAsync(meetingId, ct);
+        var sessionId = session?.Id ?? string.Empty;
+
+        var result = await _cardActionHandler.HandleActionAsync(verb, data, sessionId, ct);
+
+        _logger.LogInformation("Card action {Verb}: success={Success}, message={Message}",
+            verb, result.Success, result.Message);
     }
 
     private async Task<string> HandleLeaveCommandAsync(ITurnContext turnContext, CancellationToken ct)
