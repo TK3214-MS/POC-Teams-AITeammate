@@ -12,7 +12,7 @@
 ### RBAC
 
 | ロール | 権限 |
-|--------|------|
+| -------- | ------ |
 | Admin | 全設定変更、ユーザー管理、ナレッジ削除 |
 | User | ナレッジ閲覧・編集 |
 | Viewer | ナレッジ閲覧のみ |
@@ -20,16 +20,19 @@
 ## データ保護
 
 ### 保存時の暗号化
+
 - Cosmos DB: Microsoft マネージドキーによる暗号化（既定で有効）
 - Azure AI Search: サービス管理キーによる暗号化
 - Key Vault: HSM バックアップキーによるシークレット保護
 
 ### 転送時の暗号化
+
 - 全通信は TLS 1.2 以上
 - Container Apps のイングレスは HTTPS のみ許可
 - 内部通信も VNet 内で暗号化
 
 ### データ分離
+
 - テナントごとにパーティションキー (`TenantId`) で論理分離
 - API レベルでテナントIDの検証を強制
 - クロステナントアクセスは不可
@@ -37,20 +40,24 @@
 ## ネットワークセキュリティ
 
 ### Container Apps
+
 - イングレスは HTTPS のみ（443）
 - IP 制限: 必要に応じて設定可能
 
 ### Azure サービス間通信
+
 - Managed Identity による認証（キーレス）
 - Key Vault でシークレット一元管理
 
 ## API セキュリティ
 
 ### レート制限
+
 - 全APIエンドポイントにレート制限を適用
 - AspNetCoreRateLimit による制御
 
 ### 入力検証
+
 - モデルバインディングによる型安全な入力検証
 - 検索クエリのサニタイズ
 - CORS ポリシーによるオリジン制限
@@ -58,7 +65,7 @@
 ### OWASP Top 10 対策
 
 | リスク | 対策 |
-|--------|------|
+| -------- | ------ |
 | A01 アクセス制御の不備 | テナントID検証、RBAC |
 | A02 暗号化の失敗 | TLS 1.2+、保存時暗号化 |
 | A03 インジェクション | パラメータ化クエリ、入力検証 |
@@ -75,7 +82,7 @@
 以下のサービスで Managed Identity を使用:
 
 | サービス | ロール |
-|---------|--------|
+| --------- | -------- |
 | Cosmos DB | Cosmos DB Built-in Data Contributor |
 | Azure OpenAI | Cognitive Services OpenAI User |
 | Azure AI Search | Search Index Data Contributor |

@@ -78,7 +78,7 @@ Azure Portal → AI Search → インデックス → `knowledge-index` → セ�
 
 ### 2.3 Copilot Studio トピック設定
 
-`docs/copilot-studio-topics.md` の設計に従い、以下のトピックを作成:
+`docs/guides/copilot-studio-topics.md` の設計に従い、以下のトピックを作成:
 
 - ナレッジ検索トピック
 - 会議サマリー取得トピック

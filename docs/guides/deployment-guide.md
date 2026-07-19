@@ -12,7 +12,7 @@
 ## 環境構成
 
 | 環境 | ブランチ | トリガー | 承認 |
-|------|---------|---------|------|
+| ------ | --------- | --------- | ------ |
 | Dev | `main` | 自動 (push) | なし |
 | Staging | `release/*` | 自動 (push) | なし |
 | Production | 手動 | `workflow_dispatch` | 必要 |
@@ -33,7 +33,7 @@
 以下のシークレットをGitHub リポジトリに設定:
 
 | Secret | 説明 |
-|--------|------|
+| -------- | ------ |
 | `AZURE_CLIENT_ID` | サービスプリンシパル Client ID |
 | `AZURE_TENANT_ID` | テナント ID |
 | `AZURE_SUBSCRIPTION_ID` | サブスクリプション ID |
@@ -99,7 +99,7 @@ az containerapp ingress traffic set \
 
 ### Bicep モジュール構成
 
-```
+```text
 infra/
 ├── main.bicep              # メインテンプレート
 ├── modules/

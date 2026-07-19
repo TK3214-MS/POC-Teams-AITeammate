@@ -3,7 +3,7 @@
 ## Cosmos DB コンテナ
 
 | コンテナ | パーティションキー | 説明 |
-|---------|-------------------|------|
+| --------- | ------------------- | ------ |
 | sessions | /TenantId | 会議セッション |
 | transcripts | /SessionId | トランスクリプト |
 | knowledge | /TenantId | ナレッジエントリ |
@@ -15,7 +15,7 @@
 
 ### MeetingSession
 
-```
+```text
 MeetingSession
 ├── Id: string (GUID)
 ├── TenantId: string (partition key)
@@ -41,7 +41,7 @@ MeetingSession
 
 ### KnowledgeEntry
 
-```
+```text
 KnowledgeEntry
 ├── Id: string (GUID)
 ├── TenantId: string (partition key)
@@ -72,7 +72,7 @@ KnowledgeEntry
 
 ### AgentSettings
 
-```
+```text
 AgentSettings
 ├── TenantId: string (partition key / ID)
 ├── Intervention
@@ -104,7 +104,7 @@ AgentSettings
 
 ### AuditLogEntry
 
-```
+```text
 AuditLogEntry
 ├── Id: string (GUID)
 ├── TenantId: string (partition key)
@@ -121,7 +121,7 @@ AuditLogEntry
 ### knowledge-index
 
 | フィールド | 型 | 検索可能 | フィルター | ソート |
-|-----------|-----|---------|-----------|--------|
+| ----------- | ----- | --------- | ----------- | -------- |
 | id | string | No | Yes | No |
 | tenantId | string | No | Yes | No |
 | title | string | Yes | No | No |
@@ -135,6 +135,7 @@ AuditLogEntry
 | embedding | Collection(single) | No | No | No |
 
 ベクトル検索設定:
+
 - アルゴリズム: HNSW
 - 次元数: 3072 (text-embedding-3-large)
 - メトリック: cosine

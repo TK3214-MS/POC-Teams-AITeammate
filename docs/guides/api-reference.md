@@ -2,7 +2,7 @@
 
 ## Base URL
 
-```
+```text
 https://<app-url>/api
 ```
 
@@ -25,8 +25,9 @@ Authorization: Bearer <access-token>
 RAGナレッジ検索
 
 **Query Parameters:**
+
 | パラメータ | 型 | 必須 | 説明 |
-|-----------|-----|------|------|
+| ----------- | ----- | ------ | ------ |
 | query | string | Yes | 検索クエリ |
 | top | int | No | 最大結果数 (default: 5) |
 
@@ -49,6 +50,7 @@ RAGナレッジ検索
 ダッシュボード統計
 
 **Response:**
+
 ```json
 {
   "tenantId": "string",
@@ -80,8 +82,9 @@ RAGナレッジ検索
 ナレッジ一覧の取得
 
 **Query Parameters:**
+
 | パラメータ | 型 | 説明 |
-|-----------|-----|------|
+| ----------- | ----- | ------ |
 | query | string | 検索クエリ |
 | limit | int | 最大件数 (default: 50) |
 
@@ -110,6 +113,7 @@ RAGナレッジ検索
 ユーザー権限の更新
 
 **Request Body:**
+
 ```json
 { "role": "Admin" | "User" | "Viewer" }
 ```
@@ -119,8 +123,9 @@ RAGナレッジ検索
 監査ログの取得
 
 **Query Parameters:**
+
 | パラメータ | 型 | 説明 |
-|-----------|-----|------|
+| ----------- | ----- | ------ |
 | from | DateTimeOffset | 開始日時 |
 | to | DateTimeOffset | 終了日時 |
 | limit | int | 最大件数 (default: 100) |
@@ -132,10 +137,12 @@ RAGナレッジ検索
 ### Endpoint: /hubs/meeting-analysis
 
 **Client → Server:**
+
 - `JoinMeeting(sessionId)` — 会議セッションに参加
 - `LeaveMeeting(sessionId)` — 会議セッションから退出
 
 **Server → Client:**
+
 - `AnalysisUpdate(analysis)` — 分析結果の更新
 - `QuestionGenerated(questions)` — 質問生成通知
 - `KnowledgeExtracted(knowledge)` — ナレッジ抽出通知
@@ -149,6 +156,7 @@ RAGナレッジ検索
 ヘルスチェックエンドポイント
 
 **Checks:**
+
 - `azure-openai` — Azure OpenAI接続
 - `cosmos-db` — Cosmos DB接続
 - `ai-search` — Azure AI Search接続

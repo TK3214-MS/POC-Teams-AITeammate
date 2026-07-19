@@ -235,11 +235,11 @@ public class KnowledgeIngestionPipelineTests
     [Theory]
     [InlineData("{\"title\": \"T\", \"summary\": \"S\"}", "T", "S")]
     [InlineData("```json\n{\"title\": \"T2\", \"summary\": \"S2\"}\n```", "T2", "S2")]
-    public void ExtractJson_ParsesVariousFormats(string input, string _expectedTitle, string _expectedSummary)
+    public void ExtractJson_ParsesVariousFormats(string input, string expectedTitle, string expectedSummary)
     {
         var json = KnowledgeIngestionPipeline.ExtractJson(input);
-        Assert.Contains("title", json);
-        Assert.Contains("summary", json);
+        Assert.Contains(expectedTitle, json);
+        Assert.Contains(expectedSummary, json);
     }
 
     private void SetupChatResponse(string responseText)

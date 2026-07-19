@@ -123,7 +123,7 @@ sequenceDiagram
 ## テクノロジースタック
 
 | レイヤー | 技術 |
-|---------|------|
+| --------- | ------ |
 | Runtime | .NET 10 / ASP.NET Core |
 | Bot Framework | Microsoft 365 Agents SDK |
 | AI | Azure OpenAI (GPT-5.5, GPT-4.1) |
