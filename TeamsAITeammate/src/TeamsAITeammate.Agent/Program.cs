@@ -1,3 +1,5 @@
+using Azure.Identity;
+using Azure.Storage.Blobs;
 using Microsoft.Agents.Hosting.AspNetCore;
 using TeamsAITeammate.AI.Services;
 using TeamsAITeammate.Core.Interfaces;
@@ -21,6 +23,23 @@ builder.Services.AddSingleton<ICommandParser, CommandParser>();
 builder.Services.AddSingleton<IMeetingSessionManager, MeetingSessionManager>();
 builder.Services.AddSingleton<IGraphMeetingClient, GraphMeetingClient>();
 builder.Services.AddSingleton<IInterventionTimer, InterventionTimer>();
+
+// Phase 3 services — Transcript pipeline
+builder.Services.AddSingleton<ITranscriptProvider, WorkIQTranscriptProvider>();
+builder.Services.AddSingleton<ITranscriptProvider, GraphTranscriptProvider>();
+builder.Services.AddSingleton<ITranscriptBuffer, TranscriptBuffer>();
+builder.Services.AddSingleton<ILanguageDetector, LanguageDetector>();
+builder.Services.AddSingleton(sp =>
+{
+    var endpoint = builder.Configuration["BlobStorage:Endpoint"];
+    if (!string.IsNullOrEmpty(endpoint))
+        return new BlobServiceClient(new Uri(endpoint), new DefaultAzureCredential());
+    var connectionString = builder.Configuration["BlobStorage:ConnectionString"]
+        ?? "UseDevelopmentStorage=true";
+    return new BlobServiceClient(connectionString);
+});
+builder.Services.AddSingleton<ITranscriptPersistence, TranscriptPersistenceService>();
+builder.Services.AddHostedService<TranscriptPipelineOrchestrator>();
 
 builder.Services.AddHealthChecks();
 

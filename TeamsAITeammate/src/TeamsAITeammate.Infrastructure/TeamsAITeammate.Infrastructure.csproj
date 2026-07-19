@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="TeamsAITeammate.UnitTests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Graph" Version="*-*" />
     <PackageReference Include="Azure.Search.Documents" Version="*-*" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="*-*" />
