@@ -1,5 +1,3 @@
-namespace TeamsAITeammate.E2ETests;
-
 using Microsoft.Playwright;
 
 namespace TeamsAITeammate.E2ETests;
