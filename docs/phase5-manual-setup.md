@@ -126,7 +126,7 @@ zip -j ai-teammate.zip manifest.json color.png outline.png
 Bot に以下のコマンドを送信し、Adaptive Card のレスポンスを確認:
 
 | コマンド | 期待される動作 |
-|---------|--------------|
+| --------- | -------------- |
 | `join` | 会議参加後、沈黙検知で質問カード（`QuestionCard`）が投稿される |
 | `settings` | テキストで設定一覧が表示される（サイドパネルから設定カード利用可能） |
 | `summarize` | サマリーテキストが表示される |
@@ -161,12 +161,14 @@ az ad app show --id <BOT_ID> --query "requiredResourceAccess[].resourceAccess[].
 ローカル開発時は 2 つのターミナルで同時に起動します:
 
 **ターミナル 1 — バックエンド:**
+
 ```bash
 cd TeamsAITeammate/src/TeamsAITeammate.Agent
 dotnet run
 ```
 
 **ターミナル 2 — フロントエンド:**
+
 ```bash
 cd TeamsAITeammate/src/TeamsAITeammate.SidePanel
 npm run dev
@@ -234,7 +236,7 @@ Phase 5 の完了を確認するためのチェックリスト:
 ## 実装済みコンポーネント一覧
 
 | コンポーネント | ファイル | 説明 |
-|-------------|--------|------|
+| ------------- | -------- | ------ |
 | InterventionOrchestrator | `Infrastructure/Services/InterventionOrchestrator.cs` | 介入判定・実行オーケストレーター |
 | NotificationThrottler | `Infrastructure/Services/NotificationThrottler.cs` | 通知スロットリング（60秒間隔、20回上限、連続カード3枚上限） |
 | MessageFormatter | `Infrastructure/Services/MessageFormatter.cs` | 多言語メッセージフォーマッター（ja/en） |
@@ -246,7 +248,7 @@ Phase 5 の完了を確認するためのチェックリスト:
 ### Adaptive Card テンプレート
 
 | カード | メソッド | 用途 |
-|-------|--------|------|
+| ------- | -------- | ------ |
 | QuestionCard | `BuildQuestionCard()` | AI生成質問の表示・回答 |
 | AgendaSuggestionCard | `BuildAgendaSuggestionCard()` | 追加議題の提案 |
 | TacitKnowledgeConfirmCard | `BuildTacitKnowledgeConfirmCard()` | 暗黙知の確認・承認 |
@@ -256,7 +258,7 @@ Phase 5 の完了を確認するためのチェックリスト:
 ### ユニットテスト（65テスト追加、合計229テスト）
 
 | テストクラス | テスト数 | 対象 |
-|------------|---------|------|
+| ------------ | --------- | ------ |
 | InterventionOrchestratorTests | 16 | 介入判定・実行・一時停止 |
 | CardActionHandlerTests | 12 | 全カードアクション処理 |
 | MessageFormatterTests | 16 | 多言語フォーマット |

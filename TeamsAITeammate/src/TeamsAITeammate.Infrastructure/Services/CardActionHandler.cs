@@ -31,7 +31,7 @@ public class CardActionHandler : ICardActionHandler
             "agendaSkipAll" => new CardActionResult { Success = true, Message = "All agenda items skipped." },
             "knowledgeConfirm" => await HandleKnowledgeConfirmAsync(data, sessionId, ct),
             "knowledgeEdit" => await HandleKnowledgeEditAsync(data, sessionId, ct),
-            "knowledgeReject" => HandleKnowledgeReject(data),
+            "knowledgeReject" => await HandleKnowledgeRejectAsync(data, sessionId, ct),
             "settingsUpdate" => HandleSettingsUpdate(data),
             "settingsCancel" => new CardActionResult { Success = true, Message = "Settings change cancelled." },
             _ => new CardActionResult { Success = false, Message = $"Unknown action: {actionVerb}" }
@@ -56,7 +56,8 @@ public class CardActionHandler : ICardActionHandler
             Content = answerText,
             Type = KnowledgeType.TacitKnowledge,
             SourceContext = $"Question: {questionId}",
-            ConfidenceScore = 1.0
+            ConfidenceScore = 1.0,
+            Status = KnowledgeStatus.Confirmed
         };
 
         await _knowledge.UpsertAsync(entry, ct);
@@ -95,7 +96,9 @@ public class CardActionHandler : ICardActionHandler
             Title = "Confirmed tacit knowledge",
             Content = GetString(data, "content"),
             Type = KnowledgeType.TacitKnowledge,
-            ConfidenceScore = 1.0
+            ConfidenceScore = 1.0,
+            Status = KnowledgeStatus.Confirmed,
+            ValidatedAt = DateTimeOffset.UtcNow
         };
 
         await _knowledge.UpsertAsync(entry, ct);
@@ -123,6 +126,7 @@ public class CardActionHandler : ICardActionHandler
             Content = correctionText,
             Type = KnowledgeType.TacitKnowledge,
             ConfidenceScore = 1.0,
+            Status = KnowledgeStatus.Edited,
             UpdatedAt = DateTimeOffset.UtcNow
         };
 
@@ -132,9 +136,25 @@ public class CardActionHandler : ICardActionHandler
         return new CardActionResult { Success = true, Message = "Knowledge updated and saved." };
     }
 
-    private static CardActionResult HandleKnowledgeReject(IDictionary<string, object> data)
+    private async Task<CardActionResult> HandleKnowledgeRejectAsync(
+        IDictionary<string, object> data, string sessionId, CancellationToken ct)
     {
         var candidateId = GetString(data, "candidateId");
+
+        var entry = new KnowledgeEntry
+        {
+            Id = candidateId,
+            SessionId = sessionId,
+            Title = "Rejected tacit knowledge",
+            Content = GetString(data, "content"),
+            Type = KnowledgeType.TacitKnowledge,
+            Status = KnowledgeStatus.Rejected,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        await _knowledge.UpsertAsync(entry, ct);
+
+        _logger.LogInformation("Knowledge candidate {CandidateId} rejected and saved", candidateId);
         return new CardActionResult { Success = true, Message = $"Knowledge candidate {candidateId} rejected." };
     }
 

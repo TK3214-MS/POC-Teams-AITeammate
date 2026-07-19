@@ -99,3 +99,23 @@ output openAiEndpoint string = openAi.outputs.endpoint
 output aiSearchEndpoint string = aiSearch.outputs.endpoint
 output keyVaultUri string = keyVault.outputs.uri
 output appInsightsConnectionString string = appInsights.outputs.connectionString
+
+// ---------- Phase 8: Monitoring ----------
+
+module workbook 'modules/workbook.bicep' = {
+  name: 'workbook'
+  params: {
+    name: resourceName
+    location: location
+    appInsightsId: appInsights.outputs.name
+  }
+}
+
+module alerts 'modules/alerts.bicep' = {
+  name: 'alerts'
+  params: {
+    namePrefix: resourceName
+    location: location
+    appInsightsId: appInsights.outputs.name
+  }
+}

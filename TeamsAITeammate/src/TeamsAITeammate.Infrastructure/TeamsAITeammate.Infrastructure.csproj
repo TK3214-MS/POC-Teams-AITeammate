@@ -17,6 +17,9 @@
     <PackageReference Include="Newtonsoft.Json" Version="*" />
     <PackageReference Include="Azure.Identity" Version="*-*" />
     <PackageReference Include="Azure.Storage.Blobs" Version="*-*" />
+    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.*" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.*-*" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.*-*" />
   </ItemGroup>
 
   <ItemGroup>

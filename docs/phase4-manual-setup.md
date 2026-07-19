@@ -82,7 +82,7 @@ dotnet user-secrets set "AzureOpenAI:FallbackDeploymentName" "gpt-41"
 ### 2.2 Azure デプロイ（環境変数 / App Configuration）
 
 | 設定キー | 値 | 説明 |
-|---|---|---|
+| --- | --- | --- |
 | `AzureOpenAI__Endpoint` | `https://<name>.openai.azure.com/` | OpenAI エンドポイント |
 | `AzureOpenAI__DeploymentName` | `gpt-55` | プライマリモデル |
 | `AzureOpenAI__FallbackDeploymentName` | `gpt-41` | フォールバックモデル |
@@ -152,7 +152,7 @@ dotnet test tests/TeamsAITeammate.AIQualityTests --filter "Category=AIQuality"
 ### Core（モデル・インターフェース）
 
 | ファイル | 説明 |
-|---|---|
+| --- | --- |
 | `src/TeamsAITeammate.Core/Models/AnalysisModels.cs` | 分析結果モデル（ConversationAnalysis, DetectedTopic, TacitKnowledgeCandidate, GeneratedQuestion 等） |
 | `src/TeamsAITeammate.Core/Interfaces/IConversationAnalyzer.cs` | 会話分析インターフェース |
 | `src/TeamsAITeammate.Core/Interfaces/IQuestionGenerator.cs` | 質問生成インターフェース |
@@ -162,7 +162,7 @@ dotnet test tests/TeamsAITeammate.AIQualityTests --filter "Category=AIQuality"
 ### AI サービス
 
 | ファイル | 説明 |
-|---|---|
+| --- | --- |
 | `src/TeamsAITeammate.AI/Services/ConversationAnalyzer.cs` | トピック・決定事項・アクションアイテム分析 |
 | `src/TeamsAITeammate.AI/Services/QuestionGenerator.cs` | 10種類の深掘り質問を4段階優先度で生成 |
 | `src/TeamsAITeammate.AI/Services/TacitKnowledgeExtractor.cs` | 10カテゴリの暗黙知抽出（confidence < 0.5 フィルター） |
@@ -172,7 +172,7 @@ dotnet test tests/TeamsAITeammate.AIQualityTests --filter "Category=AIQuality"
 ### プロンプトテンプレート（Semantic Kernel）
 
 | ディレクトリ | 説明 |
-|---|---|
+| --- | --- |
 | `src/TeamsAITeammate.AI/Prompts/AnalyzeConversation/` | 会話分析プロンプト |
 | `src/TeamsAITeammate.AI/Prompts/GenerateQuestions/` | 質問生成プロンプト |
 | `src/TeamsAITeammate.AI/Prompts/ExtractTacitKnowledge/` | 暗黙知抽出プロンプト |
@@ -181,7 +181,7 @@ dotnet test tests/TeamsAITeammate.AIQualityTests --filter "Category=AIQuality"
 ### テスト
 
 | ファイル | テスト数 |
-|---|---|
+| --- | --- |
 | `tests/TeamsAITeammate.UnitTests/ConversationAnalyzerTests.cs` | 10 |
 | `tests/TeamsAITeammate.UnitTests/QuestionGeneratorTests.cs` | 10 |
 | `tests/TeamsAITeammate.UnitTests/TacitKnowledgeExtractorTests.cs` | 12 |
@@ -192,7 +192,7 @@ dotnet test tests/TeamsAITeammate.AIQualityTests --filter "Category=AIQuality"
 ### 変更されたファイル
 
 | ファイル | 変更内容 |
-|---|---|
+| --- | --- |
 | `src/TeamsAITeammate.Agent/Program.cs` | Semantic Kernel DI、IChatClient、Phase 4 サービス登録追加 |
 | `src/TeamsAITeammate.Agent/TeamsAITeammate.Agent.csproj` | `SKEXP0010` NoWarn 追加 |
 | `src/TeamsAITeammate.AI/TeamsAITeammate.AI.csproj` | Polly、InternalsVisibleTo、EmbeddedResource 追加 |

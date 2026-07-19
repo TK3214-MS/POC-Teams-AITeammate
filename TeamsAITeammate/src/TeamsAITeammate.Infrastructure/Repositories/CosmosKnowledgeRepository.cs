@@ -20,6 +20,34 @@ public class CosmosKnowledgeRepository : IKnowledgeRepository
         _container = client.GetContainer(databaseName, containerName);
     }
 
+    public async Task<KnowledgeEntry?> GetByIdAsync(string id, string tenantId, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _container.ReadItemAsync<KnowledgeEntry>(id, new PartitionKey(tenantId), cancellationToken: ct);
+            return response.Resource;
+        }
+        catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+    }
+
+    public async Task<IReadOnlyList<KnowledgeEntry>> GetByTenantAsync(string tenantId, CancellationToken ct = default)
+    {
+        var query = new QueryDefinition("SELECT * FROM c WHERE c.TenantId = @tenantId ORDER BY c.CreatedAt DESC")
+            .WithParameter("@tenantId", tenantId);
+
+        var results = new List<KnowledgeEntry>();
+        using var iterator = _container.GetItemQueryIterator<KnowledgeEntry>(query);
+        while (iterator.HasMoreResults)
+        {
+            var response = await iterator.ReadNextAsync(ct);
+            results.AddRange(response);
+        }
+        return results;
+    }
+
     public async Task UpsertAsync(KnowledgeEntry entry, CancellationToken ct = default)
     {
         await _container.UpsertItemAsync(entry, new PartitionKey(entry.TenantId), cancellationToken: ct);
@@ -54,5 +82,10 @@ public class CosmosKnowledgeRepository : IKnowledgeRepository
             results.AddRange(response);
         }
         return results;
+    }
+
+    public async Task DeleteAsync(string id, string tenantId, CancellationToken ct = default)
+    {
+        await _container.DeleteItemAsync<KnowledgeEntry>(id, new PartitionKey(tenantId), cancellationToken: ct);
     }
 }

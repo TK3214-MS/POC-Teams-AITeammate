@@ -2,8 +2,11 @@ name: CD - Production
 
 on:
   workflow_dispatch:
-  push:
-    tags: ['v*', '!v*-rc*']
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy'
+        required: true
+        type: string
 
 permissions:
   id-token: write
@@ -13,9 +16,10 @@ env:
   AZURE_RESOURCE_GROUP: rg-aiteammate-prod
   AZURE_LOCATION: japaneast
   ENVIRONMENT: prod
+  CONTAINER_APP_NAME: aiteammate-prod-app
 
 jobs:
-  deploy:
+  deploy-infra:
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -28,13 +32,90 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Setup azd
-        uses: Azure/setup-azd@v2
+      - name: Deploy Bicep (Production)
+        uses: azure/arm-deploy@v2
+        with:
+          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP }}
+          template: TeamsAITeammate/infra/main.bicep
+          parameters: >-
+            environmentName=prod
+            botAppId=${{ secrets.BOT_APP_ID }}
+            botAppPassword=${{ secrets.BOT_APP_PASSWORD }}
+            imageTag=${{ inputs.image_tag }}
 
-      - name: Deploy with azd
-        run: azd deploy --environment ${{ env.ENVIRONMENT }} --no-prompt
-        working-directory: TeamsAITeammate
-        env:
-          AZURE_ENV_NAME: ${{ env.ENVIRONMENT }}
-          AZURE_LOCATION: ${{ env.AZURE_LOCATION }}
-          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  blue-green-deploy:
+    needs: deploy-infra
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy new revision (0% traffic)
+        run: |
+          az containerapp update \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --image ${{ secrets.ACR_NAME }}.azurecr.io/teams-ai-teammate:${{ inputs.image_tag }} \
+            --revision-suffix "v-$(echo ${{ inputs.image_tag }} | cut -c1-8)"
+
+      - name: Get new revision name
+        id: revision
+        run: |
+          NEW_REV=$(az containerapp revision list \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --query "[0].name" -o tsv)
+          echo "name=${NEW_REV}" >> $GITHUB_OUTPUT
+
+      - name: Smoke test new revision
+        run: |
+          FQDN=$(az containerapp show \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          for i in {1..5}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${FQDN}/healthz")
+            if [ "$STATUS" = "200" ]; then echo "Healthy"; break; fi
+            sleep 10
+          done
+
+      - name: Traffic 10%
+        run: |
+          az containerapp ingress traffic set \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --revision-weight "${{ steps.revision.outputs.name }}=10"
+          sleep 60
+
+      - name: Traffic 50%
+        run: |
+          az containerapp ingress traffic set \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --revision-weight "${{ steps.revision.outputs.name }}=50"
+          sleep 60
+
+      - name: Traffic 100%
+        run: |
+          az containerapp ingress traffic set \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --revision-weight "${{ steps.revision.outputs.name }}=100"
+
+      - name: Deactivate old revisions
+        run: |
+          OLD_REVS=$(az containerapp revision list \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --query "[?properties.trafficWeight==\`0\`].name" -o tsv)
+          for rev in $OLD_REVS; do
+            az containerapp revision deactivate \
+              --name ${{ env.CONTAINER_APP_NAME }} \
+              --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+              --revision "$rev" || true
+          done

@@ -143,6 +143,7 @@ azurite --silent --location $TMPDIR/azurite --debug $TMPDIR/azurite/debug.log
 
 - [ ] Teams 会議を開始しトランスクリプション（文字起こし）を有効にする
 - [ ] 会議中に Graph API でトランスクリプトが取得可能であることを確認:
+
   ```bash
   # アクセストークンを取得（az cli の場合）
   TOKEN=$(az account get-access-token --resource https://graph.microsoft.com --query accessToken -o tsv)
@@ -174,7 +175,7 @@ azurite --silent --location $TMPDIR/azurite --debug $TMPDIR/azurite/debug.log
 ## 6. Phase 3 で追加されたファイル一覧
 
 | ファイル | 説明 |
-|---|---|
+| --- | --- |
 | `src/TeamsAITeammate.Core/Models/TranscriptModels.cs` | TranscriptSegment, ConversationWindow, SpeakerStats, SilencePeriod 等のモデル |
 | `src/TeamsAITeammate.Core/Interfaces/ITranscriptProvider.cs` | トランスクリプトプロバイダー抽象化 |
 | `src/TeamsAITeammate.Core/Interfaces/ITranscriptBuffer.cs` | トランスクリプトバッファ管理 |

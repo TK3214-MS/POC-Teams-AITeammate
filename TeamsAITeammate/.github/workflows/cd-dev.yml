@@ -3,6 +3,9 @@ name: CD - Dev
 on:
   push:
     branches: [main]
+    paths:
+      - 'TeamsAITeammate/**'
+  workflow_dispatch:
 
 permissions:
   id-token: write
@@ -12,9 +15,47 @@ env:
   AZURE_RESOURCE_GROUP: rg-aiteammate-dev
   AZURE_LOCATION: japaneast
   ENVIRONMENT: dev
+  ACR_NAME: aiteammatedev
+  IMAGE_NAME: teams-ai-teammate
 
 jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
+
+      - name: Restore & Build
+        run: dotnet build TeamsAITeammate/TeamsAITeammate.slnx -c Release
+
+      - name: Unit Tests
+        run: dotnet test TeamsAITeammate/tests/TeamsAITeammate.UnitTests --no-build -c Release --logger trx --results-directory TestResults
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: TestResults/*.trx
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build SidePanel
+        working-directory: TeamsAITeammate/src/TeamsAITeammate.SidePanel
+        run: npm ci && npm run build
+
   deploy:
+    needs: [build-and-test, build-frontend]
     runs-on: ubuntu-latest
     environment: dev
     steps:
@@ -37,3 +78,24 @@ jobs:
           AZURE_ENV_NAME: ${{ env.ENVIRONMENT }}
           AZURE_LOCATION: ${{ env.AZURE_LOCATION }}
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+  smoke-test:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Health Check
+        run: |
+          APP_URL="${{ secrets.DEV_APP_URL }}"
+          for i in {1..5}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${APP_URL}/healthz")
+            if [ "$STATUS" = "200" ]; then echo "Healthy"; exit 0; fi
+            echo "Attempt $i: $STATUS"; sleep 10
+          done
+          exit 1

@@ -78,9 +78,11 @@ devtunnel host ai-teammate
 
 1. Azure Portal → 作成した **Azure Bot** リソース
 2. **構成** → **メッセージング エンドポイント** に以下を入力:
-   ```
+
+   ```text
    https://<dev-tunnel-url>/api/messages
    ```
+
 3. **適用** をクリック
 
 ---
@@ -125,7 +127,7 @@ curl http://localhost:5000/healthz
 `TeamsAITeammate/appPackage/manifest.json` を開き、以下のプレースホルダーを実際の値に置換:
 
 | プレースホルダー | 置換先 |
-|---|---|
+| --- | --- |
 | `{{BOT_ID}}` | 手順1.1の アプリケーション ID |
 | `{{BASE_URL}}` | Dev Tunnel URL または デプロイ先 URL |
 
@@ -168,7 +170,7 @@ curl http://localhost:5000/healthz
 ## トラブルシューティング
 
 | 症状 | 対処 |
-|---|---|
+| --- | --- |
 | Bot が応答しない | Dev Tunnel が起動しているか確認。Azure Bot のメッセージングエンドポイント URL が正しいか確認 |
 | 401 Unauthorized | `MicrosoftAppId` / `MicrosoftAppPassword` が正しいか確認 |
 | Graph API エラー | Entra ID の API アクセス許可に管理者の同意が付与されているか確認 |

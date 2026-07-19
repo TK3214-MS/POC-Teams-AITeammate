@@ -15,6 +15,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddAgentDefaults()
     .AddAgent<TeammateAgent>();
 
+// Application Insights
+builder.Services.AddApplicationInsightsTelemetry();
+builder.Services.AddHttpClient();
+
 // Azure OpenAI + Semantic Kernel
 var aoaiEndpoint = builder.Configuration["AzureOpenAI:Endpoint"]!;
 var primaryDeployment = builder.Configuration["AzureOpenAI:DeploymentName"] ?? "gpt-55";
@@ -73,7 +77,8 @@ builder.Services.AddSingleton<ITranscriptPersistence, TranscriptPersistenceServi
 builder.Services.AddHostedService<TranscriptPipelineOrchestrator>();
 
 // Phase 4 services — AI Analysis Engine
-builder.Services.AddSingleton<IConversationAnalyzer, ConversationAnalyzer>();
+builder.Services.AddSingleton<ConversationAnalyzer>();
+builder.Services.AddSingleton<IConversationAnalyzer, RagEnhancedConversationAnalyzer>();
 builder.Services.AddSingleton<IQuestionGenerator, QuestionGenerator>();
 builder.Services.AddSingleton<ITacitKnowledgeExtractor, TacitKnowledgeExtractor>();
 builder.Services.AddSingleton<IAnalysisScheduler, AnalysisScheduler>();
@@ -85,11 +90,43 @@ builder.Services.AddSingleton<ICardActionHandler, CardActionHandler>();
 builder.Services.AddSingleton<IInterventionOrchestrator, InterventionOrchestrator>();
 builder.Services.AddSignalR();
 
-builder.Services.AddHealthChecks();
+// Phase 6 services — Data Store & Knowledge Base
+builder.Services.AddSingleton<IKnowledgeStore, CosmosKnowledgeStore>();
+builder.Services.AddSingleton<IKnowledgeStore, DataverseKnowledgeStore>();
+builder.Services.AddSingleton<IKnowledgeStore, AzureAISearchKnowledgeStore>();
+builder.Services.AddSingleton<IKnowledgeStore, SharePointKnowledgeStore>();
+builder.Services.AddSingleton<IKnowledgeStoreFactory, KnowledgeStoreFactory>();
+builder.Services.AddSingleton<TenantAwareKnowledgeStoreResolver>();
+builder.Services.AddSingleton<IEmbeddingService, EmbeddingService>();
+builder.Services.AddSingleton<IKnowledgeIngestionPipeline, KnowledgeIngestionPipeline>();
+builder.Services.AddSingleton<IDataSyncService, DataSyncService>();
+builder.Services.AddHttpClient<DataverseKnowledgeStore>();
+
+// Phase 7 services — RAG Search & Copilot Studio Integration
+builder.Services.AddSingleton<IKnowledgeRetriever, AzureAISearchRetriever>();
+builder.Services.AddSingleton<IKnowledgeQualityService, KnowledgeQualityService>();
+builder.Services.AddSingleton<IKnowledgeGraphService, KnowledgeGraphService>();
+builder.Services.AddSingleton<KnowledgeGraphConnector>();
+builder.Services.AddControllers();
+
+// Phase 8 services — Admin, Telemetry, Health Checks, Security
+builder.Services.AddSingleton<IAITeammateTelemetry, AITeammateTelemetry>();
+builder.Services.AddSingleton<IAgentSettingsRepository, CosmosAgentSettingsRepository>();
+builder.Services.AddSingleton<IAuditLogService, CosmosAuditLogService>();
+builder.Services.AddSingleton<ITenantUserRepository, CosmosTenantUserRepository>();
+builder.Services.AddSingleton<IDashboardService, DashboardService>();
+
+builder.Services.AddHealthChecks()
+    .AddCheck<AzureOpenAIHealthCheck>("azure-openai")
+    .AddCheck<CosmosDBHealthCheck>("cosmos-db")
+    .AddCheck<AzureAISearchHealthCheck>("ai-search")
+    .AddCheck<GraphAPIHealthCheck>("graph-api")
+    .AddCheck<TranscriptProviderHealthCheck>("transcript-provider");
 
 var app = builder.Build();
 
 app.UseAgents();
+app.MapControllers();
 app.MapHub<MeetingAnalysisHub>("/hubs/meeting-analysis");
 app.MapHealthChecks("/healthz");
 

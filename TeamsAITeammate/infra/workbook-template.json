@@ -1,0 +1,108 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# AI Teammate Dashboard\n\nTeams会議の暗黙知蓄積AIエージェントの運用ダッシュボード"
+      }
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "name": "TimeRange",
+            "type": 4,
+            "defaultValue": "Last 7 days"
+          }
+        ]
+      }
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "customEvents | where name == 'MeetingJoined' | summarize count() by bin(timestamp, 1d) | order by timestamp asc",
+        "size": 0,
+        "title": "会議セッション数（日次推移）",
+        "timeContext": "{TimeRange}",
+        "queryType": 0,
+        "visualization": "linechart"
+      }
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "customMetrics | where name == 'AnalysisLatencyMs' | summarize avg(value), percentile(value, 95) by bin(timestamp, 1h) | order by timestamp asc",
+        "size": 0,
+        "title": "AI分析レイテンシ（平均・P95）",
+        "timeContext": "{TimeRange}",
+        "queryType": 0,
+        "visualization": "linechart"
+      }
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "customEvents | where name == 'AnalysisExecution' | summarize QuestionsGenerated=sum(todouble(customMeasurements['QuestionsGenerated'])), TopicsDetected=sum(todouble(customMeasurements['TopicsDetected'])) by bin(timestamp, 1d)",
+        "size": 0,
+        "title": "質問生成数・トピック検出数",
+        "timeContext": "{TimeRange}",
+        "queryType": 0,
+        "visualization": "barchart"
+      }
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "customEvents | where name == 'KnowledgeIngestion' | summarize count() by tostring(customDimensions['Category']) | order by count_ desc",
+        "size": 0,
+        "title": "ナレッジ蓄積数（カテゴリ別）",
+        "timeContext": "{TimeRange}",
+        "queryType": 0,
+        "visualization": "piechart"
+      }
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "customMetrics | where name in ('AIPromptTokens', 'AICompletionTokens') | summarize TotalTokens=sum(value) by name, bin(timestamp, 1d) | order by timestamp asc",
+        "size": 0,
+        "title": "AIモデルトークン消費量",
+        "timeContext": "{TimeRange}",
+        "queryType": 0,
+        "visualization": "linechart"
+      }
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "exceptions | summarize count() by type, bin(timestamp, 1d) | order by timestamp asc",
+        "size": 0,
+        "title": "エラー率とエラー種別",
+        "timeContext": "{TimeRange}",
+        "queryType": 0,
+        "visualization": "barchart"
+      }
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "customEvents | where name == 'UserInteraction' | summarize count() by tostring(customDimensions['ActionType']), bin(timestamp, 1d) | order by timestamp asc",
+        "size": 0,
+        "title": "ユーザーアクティビティ",
+        "timeContext": "{TimeRange}",
+        "queryType": 0,
+        "visualization": "linechart"
+      }
+    }
+  ]
+}

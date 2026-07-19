@@ -12,6 +12,8 @@
     <PackageReference Include="Microsoft.Agents.Builder" Version="*-*" />
     <PackageReference Include="Microsoft.Agents.Hosting.AspNetCore" Version="*-*" />
     <PackageReference Include="Microsoft.Agents.Extensions.Teams" Version="*-*" />
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.*" />
+    <PackageReference Include="AspNetCoreRateLimit" Version="*" />
   </ItemGroup>
 
   <ItemGroup>
