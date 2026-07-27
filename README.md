@@ -21,7 +21,11 @@ Teams 会議にAIチームメイトとして参加し、会話をリアルタイ
 - Node.js 22+（SidePanel / Admin 開発用）
 - Azure CLI (`az`)
 - Azure Developer CLI (`azd`)
+- Microsoft 365 Agents Toolkit（VS Code 拡張機能）
+- Microsoft 365 Agents Toolkit CLI (`atk`、任意。パッケージ検証や Teams でのテストに使用)
 - Dev Tunnel CLI (`devtunnel`)
+
+> Azure リソースのプロビジョニングとアプリのデプロイには `azd` を使用します。Microsoft 365 Agents Toolkit は Teams アプリの開発、マニフェスト検証、ローカルテストに使用します。
 
 ## クイックスタート
 

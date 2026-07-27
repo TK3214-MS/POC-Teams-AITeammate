@@ -10,7 +10,7 @@ Teams会議に参加し、リアルタイムで会話を分析・暗黙知を蓄
 
 以下のソリューション構造で.NET 9+（最新のプレビュー含む）プロジェクトを作成してください。
 
-```
+```text
 TeamsAITeammate/
 ├── src/
 │   ├── TeamsAITeammate.Agent/          # M365 Agents SDK エージェント本体
@@ -84,6 +84,7 @@ TeamsAITeammate/
 以下のAPI権限を持つEntra IDアプリ登録のBicepテンプレートまたはセットアップスクリプトを作成してください。
 
 **必要なAPI権限（Application）:**
+
 - `OnlineMeetings.ReadWrite.All` — 会議情報の読み書き
 - `OnlineMeetingTranscript.Read.All` — トランスクリプト読み取り
 - `Chat.ReadWrite.All` — 会議チャットへの送信
@@ -91,10 +92,12 @@ TeamsAITeammate/
 - `CallRecords.Read.All` — 通話記録の読み取り
 
 **必要なAPI権限（Delegated）:**
+
 - `OnlineMeetings.ReadWrite`
 - `Chat.ReadWrite`
 
 **マルチテナント構成:**
+
 - `signInAudience`: `AzureADMultipleOrgs`
 - Bot Channel Registrationとの連携
 - OAuth2 redirect URI設定
@@ -168,6 +171,7 @@ TeamsAITeammate/
 ### 6. GitHub Actions CI パイプライン
 
 `.github/workflows/ci.yml`:
+
 - .NET build & test（xUnit）
 - Node.js build（サイドパネルSPA）
 - Bicep lint & validation
@@ -215,7 +219,7 @@ TeamsAITeammate/
 1. .NET SDK最新版の確認
 2. Node.js 22+ の確認
 3. Azure CLI & azd CLI のインストール確認
-4. Teams Toolkit CLIのインストール
+4. Microsoft 365 Agents Toolkit CLI (`atk`) のインストール確認（未導入の場合は `npm install -g @microsoft/m365agentstoolkit-cli@beta`）
 5. dev tunnel の設定
 6. `azd init` & `azd provision`（開発環境）
 7. ローカル実行用の `appsettings.Development.json` テンプレート生成

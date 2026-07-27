@@ -9,12 +9,23 @@ Phase 1 のコード実装完了後に実施する手動手順をまとめます
 - Azure サブスクリプションへのアクセス権（Contributor以上）
 - Microsoft 365 テナントの管理者権限（Entra ID アプリ登録 + API権限の承認）
 - GitHub リポジトリへのpush権限
+- Microsoft 365 Agents Toolkit（VS Code 拡張機能）がインストール済み
 - 以下のCLIがインストール済み:
   - Azure CLI (`az`)
   - Azure Developer CLI (`azd`)
+  - Microsoft 365 Agents Toolkit CLI (`atk`、任意)
   - Dev Tunnel CLI (`devtunnel`)
   - .NET SDK 10+
   - Node.js 22+
+
+`atk` を使用する場合は、次のコマンドでインストールとバージョンを確認します。
+
+```bash
+npm install -g @microsoft/m365agentstoolkit-cli@beta
+atk --version
+```
+
+> Azure リソースのプロビジョニングには `azd`、Teams アプリの開発、マニフェスト検証、ローカルテストには Microsoft 365 Agents Toolkit を使用します。
 
 ---
 

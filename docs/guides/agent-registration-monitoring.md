@@ -32,7 +32,7 @@ Agent 365 の Agent Registry では、エージェントは以下の種類で管
 | **Published by your org** | 組織が承認・公開したカスタムエージェント（LOB） |
 | **Shared by creator** | 個人が作成・共有したエージェント |
 
-AI Teammate は **M365 Agents Toolkit** で構築されたエージェントとして、Agent Registry に **"Agent Toolkit"** タイプで認識されます。さらに Agent 365 SDK で拡張することで **"Agent instance"**（Entra バックの独自 ID、拡張通知、オブザーバビリティ等）にアップグレードできます。
+AI Teammate は **Microsoft 365 Agents Toolkit** を開発とアプリパッケージ管理に使用するエージェントとして、Agent Registry に **"Agent Toolkit"** タイプで認識されます。さらに Agent 365 SDK で拡張することで **"Agent instance"**（Entra バックの独自 ID、拡張通知、オブザーバビリティ等）にアップグレードできます。
 
 ### 1.2 アプリパッケージ（ZIP）の準備
 
@@ -46,6 +46,7 @@ zip -r ../ai-teammate-agent.zip manifest.json color.png outline.png
 ```
 
 ZIP に含めるファイル:
+
 - `manifest.json` — エージェントのメタデータ、能力宣言、Bot ID
 - `color.png` — 192×192 カラーアイコン
 - `outline.png` — 32×32 アウトラインアイコン
@@ -73,7 +74,7 @@ Agent 365 の Frontier プログラムを通じて、AI Teammate を **独自の
 
 > **参考**: [Discover, create, and onboard agents with their own identity](https://learn.microsoft.com/en-us/microsoft-agent-365/onboard)
 
-#### 前提条件
+#### Agent Instance の前提条件
 
 - テナント管理者が M365 管理センターでリクエストを承認済み
 - **Microsoft Agent 365 Frontier** サブスクリプション（25シート）が有効
@@ -111,7 +112,7 @@ Agent 365 の Frontier プログラムを通じて、AI Teammate を **独自の
 | **Installed for** | Just me / Entire organization / Specific users/groups | 事前インストール対象 |
 | **Available to** | No users / All users / Specific users/groups | インストール可能な対象 |
 
-4. **Update** をクリック
+1. **Update** をクリック
 
 ### 1.6 エージェントのピン留め
 
@@ -161,6 +162,7 @@ M365 管理センターで以下を確認:
 M365 管理センターの Agent Overview は、テナント全体のエージェント活用状況を可視化します。
 
 **アクセス方法:**
+
 1. [Microsoft 365 管理センター](https://admin.microsoft.com/) にサインイン
 2. **Agents** → **Overview** を選択
 
@@ -187,6 +189,7 @@ Overview ダッシュボードには管理者が対処すべきアクション�
 各エージェントの詳細パネルにある **Activity** タブで、個別のパフォーマンスを確認できます。
 
 **アクセス方法:**
+
 1. **Agents** → **All Agents** → **Registry** でエージェントを選択
 2. フライアウトパネルの **Activity** タブを選択
 
@@ -213,11 +216,13 @@ Overview ダッシュボードには管理者が対処すべきアクション�
 Agent Map はテナント内のエージェント全体像を視覚的に把握するためのビューです。
 
 **アクセス方法:**
+
 1. **Agents** → **All Agents** → **Map** タブを選択
 
 #### クラスタ表示
 
 エージェントはビルドプラットフォーム別にクラスタとしてグループ化されます:
+
 - Microsoft 365 Copilot Agent Builder
 - Copilot Studio
 - **Microsoft 365 Agents Toolkit** ← AI Teammate はここに分類
@@ -231,7 +236,7 @@ Agent Map はテナント内のエージェント全体像を視覚的に把握�
 | --------------- | ------------ |
 | **Status** | Available, Blocked, Draft, Not activated |
 | **Publisher type** | Your org, Your users, Microsoft, Third party |
-| **Platform** | Copilot Studio, Agent Builder, M365 Agents Toolkit, Foundry 等 |
+| **Platform** | Copilot Studio, Agent Builder, Microsoft 365 Agents Toolkit, Foundry 等 |
 | **Channel** | Copilot, Outlook, Teams, Microsoft 365 apps, SharePoint |
 | **Usage** | Active users (Top 100), Sessions, Exception rate, Assisted hours, Security alerts |
 
@@ -304,12 +309,14 @@ Agent Overview の **Agent analytics** セクションでテナント全体の�
 Agent 365 は外部プラットフォームのエージェントも一元管理できます（プレビュー）。
 
 **対応プラットフォーム:**
+
 - Amazon Bedrock
 - Google Vertex AI
 - Salesforce Agentforce
 - Databricks Genie
 
 **設定手順:**
+
 1. **Agents** → **All Agents** → **Registry sync** の **Manage** を選択
 2. **+ Connect a platform** をクリック
 3. 接続名・説明・プラットフォーム・リージョンを入力
