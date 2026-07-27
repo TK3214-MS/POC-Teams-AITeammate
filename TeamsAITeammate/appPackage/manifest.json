@@ -2,7 +2,7 @@
   "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.19/MicrosoftTeams.schema.json",
   "manifestVersion": "1.19",
   "version": "1.0.0",
-  "id": "${{BOT_ID}}",
+  "id": "e8ce26fe-665b-4e51-bb7b-8483d7bb0f08",
   "developer": {
     "name": "AI Teammate Team",
     "websiteUrl": "https://github.com/your-org/teams-ai-teammate",
@@ -24,7 +24,7 @@
   "accentColor": "#5B5FC7",
   "bots": [
     {
-      "botId": "${{BOT_ID}}",
+      "botId": "e8ce26fe-665b-4e51-bb7b-8483d7bb0f08",
       "scopes": ["team", "personal", "groupChat"],
       "supportsFiles": false,
       "isNotificationOnly": false,
@@ -44,7 +44,7 @@
   ],
   "configurableTabs": [
     {
-      "configurationUrl": "https://${{HOSTNAME}}/configure",
+      "configurationUrl": "https://aiteammate-dev-mfxwfpuo7stza-app.kinddune-aee006e4.japaneast.azurecontainerapps.io/configure",
       "canUpdateConfiguration": true,
       "scopes": ["groupChat"],
       "meetingSurfaces": ["sidePanel"],
@@ -52,5 +52,5 @@
     }
   ],
   "permissions": ["identity", "messageTeamMembers"],
-  "validDomains": ["${{HOSTNAME}}"]
+  "validDomains": ["aiteammate-dev-mfxwfpuo7stza-app.kinddune-aee006e4.japaneast.azurecontainerapps.io"]
 }

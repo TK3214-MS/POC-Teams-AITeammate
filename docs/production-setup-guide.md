@@ -72,6 +72,10 @@ az account set --subscription "<SUBSCRIPTION_ID>"
 
 # 確認
 az account show --query "{name:name, id:id, tenantId:tenantId}" --output table
+
+# Container Apps と Azure Bot Service のリソースプロバイダーを登録
+az provider register --namespace Microsoft.App --wait
+az provider register --namespace Microsoft.BotService --wait
 ```
 
 > **メモ**: この手順で表示される `tenantId` は後続で使用します。
@@ -122,7 +126,7 @@ Bot App Password: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 | 項目 | 値 |
 | ---- | -- |
 | 表示名 | AI Teammate Bot |
-| サインイン対象 | AzureADMultipleOrgs（マルチテナント） |
+| サインイン対象 | AzureADMyOrg（シングルテナント） |
 | リダイレクト URI | `https://token.botframework.com/.auth/web/redirect` |
 
 ### 3.4 付与される API アクセス許可
@@ -219,11 +223,12 @@ azd env get-values | grep -v 'BOT_APP_PASSWORD'
 
 | 出力キー | 用途 |
 | -------- | ---- |
-| `CONTAINER_APP_FQDN` | Bot のメッセージングエンドポイント |
-| `COSMOS_DB_ENDPOINT` | Cosmos DB 接続先 |
-| `OPENAI_ENDPOINT` | Azure OpenAI 接続先 |
-| `AI_SEARCH_ENDPOINT` | AI Search 接続先 |
-| `KEY_VAULT_URI` | Key Vault URI |
+| `containerAppFqdn` | Bot のメッセージングエンドポイント |
+| `cosmosDbEndpoint` | Cosmos DB 接続先 |
+| `openAiEndpoint` | Azure OpenAI 接続先 |
+| `aiSearchEndpoint` | AI Search 接続先 |
+| `keyVaultUri` | Key Vault URI |
+| `AZURE_CONTAINER_REGISTRY_ENDPOINT` | azd がDockerイメージをpushするACR接続先 |
 
 ---
 
@@ -246,8 +251,9 @@ azd deploy
 Container Apps に以下の環境変数が自動注入されます:
 
 ```
-Agents__Type=MultiTenant
+Agents__Type=SingleTenant
 Agents__MicrosoftAppId=<botAppId>
+Agents__MicrosoftAppTenantId=<tenantId>
 CosmosDb__Endpoint=<cosmosDbEndpoint>
 AzureOpenAI__Endpoint=<openAiEndpoint>
 AzureAISearch__Endpoint=<aiSearchEndpoint>
@@ -264,23 +270,29 @@ AZURE_CLIENT_ID=<managedIdentityClientId>
 Azure Bot Service にボットを登録し、Teams チャネルを有効にします:
 
 ```bash
-# Container Apps の FQDN を取得
-APP_FQDN=$(azd env get-value CONTAINER_APP_FQDN 2>/dev/null || \
-  az containerapp show \
-    --name "$(az containerapp list -g "$RESOURCE_GROUP" --query '[0].name' -o tsv)" \
-    --resource-group "$RESOURCE_GROUP" \
-    --query "properties.configuration.ingress.fqdn" -o tsv)
+# 必要な値を azd 環境から取得
+RESOURCE_GROUP=$(azd env get-value AZURE_RESOURCE_GROUP)
+BOT_APP_ID=$(azd env get-value BOT_APP_ID)
+APP_FQDN=$(azd env get-value containerAppFqdn)
+TENANT_ID=$(az account show --query tenantId -o tsv)
 
 echo "App FQDN: $APP_FQDN"
+
+# 既存の Entra アプリを SingleTenant に変更
+az ad app update \
+  --id "$BOT_APP_ID" \
+  --sign-in-audience "AzureADMyOrg"
 
 # Azure Bot リソースを作成
 az bot create \
   --resource-group "$RESOURCE_GROUP" \
   --name "aiteammate-bot-dev" \
-  --kind "registration" \
+  --sku "F0" \
+  --location "global" \
   --endpoint "https://$APP_FQDN/api/messages" \
-  --app-type "MultiTenant" \
-  --appid "$BOT_APP_ID"
+  --app-type "SingleTenant" \
+  --appid "$BOT_APP_ID" \
+  --tenant-id "$TENANT_ID"
 
 # Teams チャネルを有効化
 az bot msteams create \
@@ -288,7 +300,7 @@ az bot msteams create \
   --name "aiteammate-bot-dev"
 ```
 
-> **メッセージングエンドポイント**: `https://<CONTAINER_APP_FQDN>/api/messages`
+> **メッセージングエンドポイント**: `https://<containerAppFqdn>/api/messages`
 
 ---
 

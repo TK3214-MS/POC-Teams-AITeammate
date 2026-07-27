@@ -96,9 +96,9 @@ TeamsAITeammate/
 - `OnlineMeetings.ReadWrite`
 - `Chat.ReadWrite`
 
-**マルチテナント構成:**
+**シングルテナント構成:**
 
-- `signInAudience`: `AzureADMultipleOrgs`
+- `signInAudience`: `AzureADMyOrg`
 - Bot Channel Registrationとの連携
 - OAuth2 redirect URI設定
 
@@ -183,7 +183,7 @@ TeamsAITeammate/
 ```json
 {
   "Agents": {
-    "Type": "MultiTenant",
+    "Type": "SingleTenant",
     "MicrosoftAppId": "",
     "MicrosoftAppPassword": "",
     "MicrosoftAppTenantId": ""

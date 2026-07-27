@@ -11,7 +11,7 @@ param botEndpoint string
 /*
 Required Entra ID App Registration:
   Display Name: ${appDisplayName}
-  Sign-in audience: AzureADMultipleOrgs (Multi-tenant)
+  Sign-in audience: AzureADMyOrg (Single-tenant)
   Redirect URIs: ${botEndpoint}/auth/callback
 
 Required API Permissions (Application):

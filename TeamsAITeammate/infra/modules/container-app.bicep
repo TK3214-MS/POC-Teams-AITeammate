@@ -130,9 +130,10 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             memory: '1Gi'
           }
           env: [
-            { name: 'Agents__Type', value: 'MultiTenant' }
+            { name: 'Agents__Type', value: 'SingleTenant' }
             { name: 'Agents__MicrosoftAppId', value: botAppId }
             { name: 'Agents__MicrosoftAppPassword', secretRef: 'bot-app-password' }
+            { name: 'Agents__MicrosoftAppTenantId', value: subscription().tenantId }
             { name: 'CosmosDb__Endpoint', value: cosmosDbEndpoint }
             { name: 'AzureOpenAI__Endpoint', value: openAiEndpoint }
             { name: 'AzureAISearch__Endpoint', value: aiSearchEndpoint }
@@ -181,5 +182,6 @@ resource kvAccessPolicy 'Microsoft.KeyVault/vaults/accessPolicies@2023-07-01' = 
 }
 
 output fqdn string = containerApp.properties.configuration.ingress.fqdn
+output containerRegistryEndpoint string = acr.properties.loginServer
 output identityPrincipalId string = managedIdentity.properties.principalId
 output identityClientId string = managedIdentity.properties.clientId

@@ -95,6 +95,7 @@ output openAiEndpoint string = openAi.outputs.endpoint
 output aiSearchEndpoint string = aiSearch.outputs.endpoint
 output keyVaultUri string = keyVault.outputs.uri
 output appInsightsConnectionString string = appInsights.outputs.connectionString
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerApp.outputs.containerRegistryEndpoint
 
 // ---------- Phase 8: Monitoring ----------
 
