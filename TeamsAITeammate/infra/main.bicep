@@ -21,10 +21,7 @@ param botAppPassword string
 param openAiDeploymentName string = 'gpt-55'
 
 @description('Fallback Azure OpenAI model deployment name')
-param openAiFallbackDeploymentName string = 'gpt-41'
-
-@description('Container image tag')
-param imageTag string = 'latest'
+param openAiFallbackDeploymentName string = 'gpt-54-mini'
 
 // ---------- Variables ----------
 var prefix = 'aiteammate'
@@ -82,7 +79,6 @@ module containerApp 'modules/container-app.bicep' = {
     name: '${resourceName}-app'
     location: location
     containerRegistryName: containerRegistryName
-    imageTag: imageTag
     botAppId: botAppId
     keyVaultName: keyVault.outputs.name
     cosmosDbEndpoint: cosmosDb.outputs.endpoint
@@ -107,7 +103,7 @@ module workbook 'modules/workbook.bicep' = {
   params: {
     name: resourceName
     location: location
-    appInsightsId: appInsights.outputs.name
+    appInsightsId: appInsights.outputs.resourceId
   }
 }
 
@@ -116,6 +112,6 @@ module alerts 'modules/alerts.bicep' = {
   params: {
     namePrefix: resourceName
     location: location
-    appInsightsId: appInsights.outputs.name
+    appInsightsId: appInsights.outputs.resourceId
   }
 }

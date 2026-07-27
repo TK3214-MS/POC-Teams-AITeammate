@@ -23,8 +23,8 @@ APP_ID=$(az ad app create \
         {
             "resourceAppId": "00000003-0000-0000-c000-000000000000",
             "resourceAccess": [
-                { "id": "c9a497fc-a3d0-4e60-b1ae-0b4d44248b0d", "type": "Role" },
-                { "id": "a]"]a2286e-7a14-4365-80e4-a5daa8e5e4d5", "type": "Role" },
+                { "id": "b8bb2037-6e08-44ac-a4ea-4674e010e2a4", "type": "Role" },
+                { "id": "a4a80d8d-d283-4bd8-8504-555ec3870630", "type": "Role" },
                 { "id": "294ce7c9-31ba-490a-ad7d-97a7d075e4ed", "type": "Role" },
                 { "id": "df021288-bdef-4463-88db-98f22de89214", "type": "Role" },
                 { "id": "45bbb07e-7321-4fd7-a8f6-3ff27e6a81c8", "type": "Role" },

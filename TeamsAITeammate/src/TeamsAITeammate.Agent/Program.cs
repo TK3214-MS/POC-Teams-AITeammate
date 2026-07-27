@@ -22,7 +22,7 @@ builder.Services.AddHttpClient();
 // Azure OpenAI + Semantic Kernel
 var aoaiEndpoint = builder.Configuration["AzureOpenAI:Endpoint"]!;
 var primaryDeployment = builder.Configuration["AzureOpenAI:DeploymentName"] ?? "gpt-55";
-var fallbackDeployment = builder.Configuration["AzureOpenAI:FallbackDeploymentName"] ?? "gpt-41";
+var fallbackDeployment = builder.Configuration["AzureOpenAI:FallbackDeploymentName"] ?? "gpt-54-mini";
 var credential = new DefaultAzureCredential();
 
 builder.Services.AddKernel()

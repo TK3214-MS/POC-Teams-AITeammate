@@ -33,8 +33,8 @@ resource primaryDeployment 'Microsoft.CognitiveServices/accounts/deployments@202
   properties: {
     model: {
       format: 'OpenAI'
-      name: 'gpt-4.1'
-      version: '2025-04-14'
+      name: 'gpt-5.5'
+      version: '2026-04-24'
     }
   }
 }
@@ -49,8 +49,8 @@ resource fallbackDeployment 'Microsoft.CognitiveServices/accounts/deployments@20
   properties: {
     model: {
       format: 'OpenAI'
-      name: 'gpt-4.1'
-      version: '2025-04-14'
+      name: 'gpt-5.4-mini'
+      version: '2026-03-17'
     }
   }
   dependsOn: [primaryDeployment]

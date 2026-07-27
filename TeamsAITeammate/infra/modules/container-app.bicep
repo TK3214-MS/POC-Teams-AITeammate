@@ -7,9 +7,6 @@ param location string
 @description('Container Registry name')
 param containerRegistryName string
 
-@description('Image tag')
-param imageTag string
-
 @description('Bot App ID')
 param botAppId string
 
@@ -88,6 +85,12 @@ resource acrPullRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
   name: name
   location: location
+  dependsOn: [
+    kvAccessPolicy
+  ]
+  tags: {
+    'azd-service-name': 'agent'
+  }
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
@@ -109,12 +112,19 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
           identity: managedIdentity.id
         }
       ]
+      secrets: [
+        {
+          name: 'bot-app-password'
+          keyVaultUrl: 'https://${keyVaultName}${environment().suffixes.keyvaultDns}/secrets/BotAppPassword'
+          identity: managedIdentity.id
+        }
+      ]
     }
     template: {
       containers: [
         {
           name: 'agent'
-          image: '${acr.properties.loginServer}/teams-ai-teammate:${imageTag}'
+          image: 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
           resources: {
             cpu: json('0.5')
             memory: '1Gi'
@@ -122,6 +132,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
           env: [
             { name: 'Agents__Type', value: 'MultiTenant' }
             { name: 'Agents__MicrosoftAppId', value: botAppId }
+            { name: 'Agents__MicrosoftAppPassword', secretRef: 'bot-app-password' }
             { name: 'CosmosDb__Endpoint', value: cosmosDbEndpoint }
             { name: 'AzureOpenAI__Endpoint', value: openAiEndpoint }
             { name: 'AzureAISearch__Endpoint', value: aiSearchEndpoint }

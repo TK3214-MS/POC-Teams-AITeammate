@@ -10,9 +10,9 @@ param actionGroupId string = ''
 @description('Location')
 param location string
 
-// Alert: エラー率 > 5%
+// Alert: 失敗リクエスト数 > 5
 resource errorRateAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
-  name: '${namePrefix}-high-error-rate'
+  name: '${namePrefix}-high-failed-requests'
   location: 'global'
   properties: {
     severity: 2
@@ -29,13 +29,13 @@ resource errorRateAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
           metricNamespace: 'microsoft.insights/components'
           operator: 'GreaterThan'
           threshold: 5
-          timeAggregation: 'Average'
+          timeAggregation: 'Count'
           criterionType: 'StaticThresholdCriterion'
         }
       ]
     }
     actions: actionGroupId != '' ? [{ actionGroupId: actionGroupId }] : []
-    description: 'エラー率が5%を超えました'
+    description: '15分間の失敗リクエスト数が5件を超えました'
   }
 }
 

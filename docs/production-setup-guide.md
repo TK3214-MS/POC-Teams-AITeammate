@@ -17,16 +17,7 @@
 | .NET SDK | 10.0+ | <https://dot.net/download> |
 | Node.js | 22+ | <https://nodejs.org/> |
 | Docker Desktop | 27+ | <https://www.docker.com/products/docker-desktop/> |
-| Microsoft 365 Agents Toolkit (VS Code 拡張機能) | 最新 | VS Code Extensions で `Microsoft 365 Agents Toolkit` を検索 |
-| Microsoft 365 Agents Toolkit CLI (`atk`) | 1.1.5-beta より新しいバージョン | `npm install -g @microsoft/m365agentstoolkit-cli@beta` |
-
-インストール後、CLI を確認します。
-
-```bash
-atk --version
-```
-
-> **ツールの役割**: このプロジェクトでは、Azure リソースのプロビジョニングとデプロイに `azd` を使用します。Microsoft 365 Agents Toolkit と `atk` は、Teams アプリの開発、マニフェスト検証、ローカルテストに使用します。
+| Teams Toolkit (VS Code 拡張) | 最新 | VS Code Extensions で検索 |
 
 ### Azure サブスクリプション要件
 
@@ -60,7 +51,7 @@ atk --version
 | 10 | 動作確認 & ヘルスチェック | 5分 |
 | 11 | (オプション) Agent 365 登録 | 10分 |
 
-合計: **約 50〜60分**
+**合計: 約 50〜60分**
 
 ---
 
@@ -69,6 +60,9 @@ atk --version
 ```bash
 # Azure にログイン
 az login
+
+# Azure Developer CLI にログイン
+azd auth login
 
 # サブスクリプション一覧を確認
 az account list --output table
@@ -118,7 +112,7 @@ chmod +x scripts/setup-entra-app.sh
 
 スクリプト実行後、以下の値が出力されます。**必ず安全な場所に保存**してください:
 
-```text
+```
 Bot App ID:       xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 Bot App Password: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
@@ -171,10 +165,12 @@ cd TeamsAITeammate
 # azd 環境を初期化
 azd init --environment dev
 
-# 環境変数を設定
-azd env set AZURE_LOCATION "$LOCATION"
-azd env set AZURE_RESOURCE_GROUP "$RESOURCE_GROUP"
+# Step 2 で使用した実際の値を設定
+azd env set AZURE_LOCATION "<Step 2 で使用したリージョン>"
+azd env set AZURE_RESOURCE_GROUP "<Step 2 で作成したリソースグループ名>"
 ```
+
+> 別のターミナルで実行する場合、Step 2 のシェル変数 `LOCATION` と `RESOURCE_GROUP` は引き継がれません。空の変数を指定せず、実際の値（例: `japaneast`、`rg-aiteammate-dev`）を設定してください。
 
 ---
 
@@ -213,9 +209,11 @@ azd provision
 ### 6.3 出力値の確認
 
 ```bash
-# デプロイ完了後、出力値を確認
-azd env get-values
+# デプロイ完了後、シークレットを除外して出力値を確認
+azd env get-values | grep -v 'BOT_APP_PASSWORD'
 ```
+
+> `azd env get-values` の出力には `BOT_APP_PASSWORD` が平文で含まれます。フィルターなしの出力をログ、チャット、チケットへ貼り付けないでください。
 
 主要な出力値:
 
@@ -247,7 +245,7 @@ azd deploy
 
 Container Apps に以下の環境変数が自動注入されます:
 
-```text
+```
 Agents__Type=MultiTenant
 Agents__MicrosoftAppId=<botAppId>
 CosmosDb__Endpoint=<cosmosDbEndpoint>
@@ -469,8 +467,8 @@ az bot show \
   --query "properties.endpoint" -o tsv
 ```
 
-1. エンドポイントが Container Apps の FQDN と一致していることを確認
-2. Entra ID アプリの `MicrosoftAppId` とBot登録の `appId` が一致していることを確認
+2. エンドポイントが Container Apps の FQDN と一致していることを確認
+3. Entra ID アプリの `MicrosoftAppId` とBot登録の `appId` が一致していることを確認
 
 ### Admin Consent が付与されていない
 
