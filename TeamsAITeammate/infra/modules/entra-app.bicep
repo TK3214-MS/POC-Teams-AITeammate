@@ -1,18 +1,12 @@
-@description('Entra App display name')
-param appDisplayName string = 'AI Teammate Bot'
-
-@description('Bot messaging endpoint')
-param botEndpoint string
-
 // Note: Entra ID app registrations cannot be fully created via Bicep.
 // This module documents the required configuration.
 // Use the setup script (scripts/setup-entra-app.sh) or Azure Portal to create the app.
 
 /*
 Required Entra ID App Registration:
-  Display Name: ${appDisplayName}
+  Display Name: AI Teammate Bot
   Sign-in audience: AzureADMyOrg (Single-tenant)
-  Redirect URIs: ${botEndpoint}/auth/callback
+  Redirect URI: https://token.botframework.com/.auth/web/redirect
 
 Required API Permissions (Application):
   - Microsoft Graph:
@@ -28,7 +22,7 @@ Required API Permissions (Delegated):
     - Chat.ReadWrite
 
 Bot Channel Registration:
-  - Messaging endpoint: ${botEndpoint}/api/messages
+  - Messaging endpoint: https://<container-app-fqdn>/api/messages
   - Supported channels: Microsoft Teams
 */
 

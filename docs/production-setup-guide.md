@@ -4,6 +4,8 @@
 
 本ドキュメントは、Teams AI Teammate（フェーズ1〜8 実装済み）を Azure 環境にデプロイし、本番想定で動作確認するための**一気通貫の手順書**です。
 
+> 初めて環境を再現する場合は、前提確認と現行実装の制約を整理した[環境再現ガイド](reproduction-guide.md)から開始してください。本書は運用上の詳細確認に使用します。
+
 ---
 
 ## 前提条件
@@ -51,7 +53,7 @@
 | 10 | 動作確認 & ヘルスチェック | 5分 |
 | 11 | (オプション) Agent 365 登録 | 10分 |
 
-**合計: 約 50〜60分**
+合計所要時間の目安は約50〜60分です。
 
 ---
 
@@ -93,7 +95,7 @@ LOCATION="eastus2"
 az group create --name "$RESOURCE_GROUP" --location "$LOCATION"
 ```
 
-> **リージョン選定**: Azure OpenAI の GPT-4.1 / GPT-5.5 モデルの可用性に依存します。  
+> **リージョン選定**: Azure OpenAI の GPT-5.5 / GPT-5.4-mini モデルの可用性に依存します。
 > 最新の利用可能リージョンは [Azure OpenAI モデル一覧](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models) を参照してください。
 
 ---
@@ -116,7 +118,7 @@ chmod +x scripts/setup-entra-app.sh
 
 スクリプト実行後、以下の値が出力されます。**必ず安全な場所に保存**してください:
 
-```
+```text
 Bot App ID:       xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 Bot App Password: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
@@ -201,8 +203,8 @@ azd provision
 | -------- | ---- |
 | Azure Container Apps 環境 + アプリ | エージェントのホスト（スケール: 1〜10 レプリカ） |
 | Azure Container Registry (ACR) | Docker イメージ格納 |
-| Azure Cosmos DB (Serverless) | セッション、トランスクリプト、ナレッジ、設定、監査ログ |
-| Azure OpenAI (S0) | GPT-5.5、GPT-4.1、text-embedding-3-large |
+| Azure Cosmos DB (Serverless) | セッション、トランスクリプト、ナレッジ |
+| Azure OpenAI (S0) | GPT-5.5、GPT-5.4-mini、text-embedding-3-large |
 | Azure AI Search (Basic) | ベクトルインデックス（3072次元、HNSW） |
 | Azure Key Vault | Bot パスワード保管 |
 | Application Insights + Log Analytics | テレメトリ & ログ |
@@ -250,7 +252,7 @@ azd deploy
 
 Container Apps に以下の環境変数が自動注入されます:
 
-```
+```text
 Agents__Type=SingleTenant
 Agents__MicrosoftAppId=<botAppId>
 Agents__MicrosoftAppTenantId=<tenantId>
@@ -261,7 +263,7 @@ APPLICATIONINSIGHTS_CONNECTION_STRING=<appInsightsConnectionString>
 AZURE_CLIENT_ID=<managedIdentityClientId>
 ```
 
-> **注**: Managed Identity により、Cosmos DB / OpenAI / AI Search / Key Vault への認証はキーレスで行われます。シークレットの管理は不要です。
+> **注**: Managed Identity により、Cosmos DB / OpenAI / AI Search / Key Vault への認証はキーレスで行われます。初回構築時は[環境再現ガイドのRBAC手順](reproduction-guide.md#6-managed-identityへデータアクセス権を付与)に従ってデータアクセス権を付与してください。
 
 ---
 
@@ -306,28 +308,13 @@ az bot msteams create \
 
 ## Step 9: Teams アプリパッケージ作成 & サイドロード
 
-### 9.1 マニフェストの値置換
+### 9.1 環境別ZIPパッケージ作成
 
-```bash
-cd TeamsAITeammate/appPackage
+ソースのマニフェストを直接変更せず、[環境再現ガイドのパッケージ生成手順](reproduction-guide.md#9-環境別teamsアプリパッケージの生成)で `ai-teammate-app.zip` を生成してください。
 
-# manifest.json のプレースホルダーを実際の値に置換
-sed -i '' "s/\${{BOT_ID}}/$BOT_APP_ID/g" manifest.json
-sed -i '' "s/\${{HOSTNAME}}/$APP_FQDN/g" manifest.json
-```
+リポジトリには規定寸法のプレースホルダーアイコンが含まれます。本番公開前に正式なブランドアイコンへ差し替えてください。
 
-### 9.2 ZIP パッケージ作成
-
-```bash
-# アイコンが存在しない場合はダミーを作成（本番では正式なアイコンを使用）
-[ ! -f color.png ] && printf '\x89PNG\r\n' > color.png
-[ ! -f outline.png ] && printf '\x89PNG\r\n' > outline.png
-
-# ZIP パッケージ作成
-zip -r ../ai-teammate-app.zip manifest.json color.png outline.png
-```
-
-### 9.3 Teams へのサイドロード
+### 9.2 Teams へのサイドロード
 
 1. **Microsoft Teams** を開く
 2. 左サイドバーの **アプリ** → **アプリを管理** → **アプリをアップロード**
@@ -335,7 +322,7 @@ zip -r ../ai-teammate-app.zip manifest.json color.png outline.png
 4. `ai-teammate-app.zip` を選択してアップロード
 5. インストール確認ダイアログで **追加** をクリック
 
-### 9.4 会議へのインストール
+### 9.3 会議へのインストール
 
 1. テスト用の Teams 会議をスケジュール
 2. 会議の **+（タブ追加）** → **AI Teammate** を検索して追加
@@ -349,19 +336,11 @@ zip -r ../ai-teammate-app.zip manifest.json color.png outline.png
 
 ```bash
 # ヘルスチェック
-curl -s "https://$APP_FQDN/healthz" | jq .
+curl --fail --silent --show-error "https://$APP_FQDN/healthz"
+echo
 
 # 期待されるレスポンス
-# {
-#   "status": "Healthy",
-#   "checks": {
-#     "azure-openai": "Healthy",
-#     "cosmos-db": "Healthy",
-#     "ai-search": "Healthy",
-#     "graph-api": "Healthy",
-#     "transcript-provider": "Healthy"
-#   }
-# }
+# Healthy
 ```
 
 ### 10.2 Bot メッセージング確認
@@ -431,7 +410,7 @@ az containerapp logs show \
 # 利用可能なモデルとリージョンを確認
 az cognitiveservices model list \
   --location "$LOCATION" \
-  --query "[?model.name=='gpt-4.1'].model.{name:name, version:version}" \
+  --query "[?model.name=='gpt-5.5' || model.name=='gpt-5.4-mini'].model.{name:name, version:version}" \
   --output table
 ```
 
@@ -479,8 +458,8 @@ az bot show \
   --query "properties.endpoint" -o tsv
 ```
 
-2. エンドポイントが Container Apps の FQDN と一致していることを確認
-3. Entra ID アプリの `MicrosoftAppId` とBot登録の `appId` が一致していることを確認
+1. エンドポイントが Container Apps の FQDN と一致していることを確認
+2. Entra ID アプリの `MicrosoftAppId` とBot登録の `appId` が一致していることを確認
 
 ### Admin Consent が付与されていない
 
@@ -529,7 +508,7 @@ graph TB
         end
         ACR[Container Registry]
         CosmosDB[(Cosmos DB<br/>Serverless)]
-        OpenAI[Azure OpenAI<br/>GPT-5.5 / GPT-4.1<br/>text-embedding-3-large]
+        OpenAI[Azure OpenAI<br/>GPT-5.5 / GPT-5.4-mini<br/>text-embedding-3-large]
         AISearch[Azure AI Search<br/>Basic / Semantic]
         KV[Key Vault]
         AppIns[Application Insights]

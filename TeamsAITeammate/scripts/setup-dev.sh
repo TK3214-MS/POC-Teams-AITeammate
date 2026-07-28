@@ -29,8 +29,8 @@ echo "-------------------------------------------"
 if check_command dotnet; then
     DOTNET_VERSION=$(dotnet --version)
     MAJOR=$(echo "$DOTNET_VERSION" | cut -d. -f1)
-    if [ "$MAJOR" -lt 9 ]; then
-        echo -e "${YELLOW}⚠ .NET SDK $DOTNET_VERSION found, but 9.0+ is required${NC}"
+    if [ "$MAJOR" -lt 10 ]; then
+        echo -e "${YELLOW}⚠ .NET SDK $DOTNET_VERSION found, but 10.0+ is required${NC}"
         echo "  Install from: https://dot.net/download"
     fi
 else
@@ -65,12 +65,12 @@ echo ""
 echo "2. Restoring .NET dependencies..."
 echo "-------------------------------------------"
 cd "$(dirname "$0")/.."
-dotnet restore TeamsAITeammate.sln
+dotnet restore TeamsAITeammate.slnx
 
 echo ""
 echo "3. Building solution..."
 echo "-------------------------------------------"
-dotnet build TeamsAITeammate.sln -c Debug
+dotnet build TeamsAITeammate.slnx -c Debug
 
 echo ""
 echo "4. Creating appsettings.Development.json template..."

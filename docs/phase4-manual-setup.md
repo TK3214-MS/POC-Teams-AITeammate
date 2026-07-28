@@ -19,22 +19,22 @@ az cognitiveservices account deployment create \
   --name <your-openai-resource> \
   --resource-group <your-rg> \
   --deployment-name gpt-55 \
-  --model-name gpt-55 \
-  --model-version "2025-05-01" \
+  --model-name gpt-5.5 \
+  --model-version "2026-04-24" \
   --model-format OpenAI \
   --sku-capacity 30 \
-  --sku-name Standard
+  --sku-name GlobalStandard
 
-# フォールバックモデル（GPT-4.1）
+# フォールバックモデル（GPT-5.4-mini）
 az cognitiveservices account deployment create \
   --name <your-openai-resource> \
   --resource-group <your-rg> \
-  --deployment-name gpt-41 \
-  --model-name gpt-4.1 \
-  --model-version "2025-04-14" \
+  --deployment-name gpt-54-mini \
+  --model-name gpt-5.4-mini \
+  --model-version "2026-03-17" \
   --model-format OpenAI \
   --sku-capacity 30 \
-  --sku-name Standard
+  --sku-name GlobalStandard
 
 # Embedding モデル
 az cognitiveservices account deployment create \
@@ -48,7 +48,7 @@ az cognitiveservices account deployment create \
   --sku-name Standard
 ```
 
-> **注意:** GPT-5.5 がリージョンで利用できない場合は、`gpt-4.1` をプライマリとして設定し、`appsettings.json` の `DeploymentName` を `gpt-41` に変更してください。
+> **注意:** GPT-5.5 がリージョンで利用できない場合は、`gpt-5.4-mini` をプライマリとして設定し、`appsettings.json` の `DeploymentName` を `gpt-54-mini` に変更してください。
 
 ### 1.2 RBAC 設定（Managed Identity 使用時）
 
@@ -75,8 +75,8 @@ dotnet user-secrets set "AzureOpenAI:Endpoint" "https://<your-resource>.openai.a
 # プライマリモデル（デフォルト: gpt-55）
 dotnet user-secrets set "AzureOpenAI:DeploymentName" "gpt-55"
 
-# フォールバックモデル（デフォルト: gpt-41）
-dotnet user-secrets set "AzureOpenAI:FallbackDeploymentName" "gpt-41"
+# フォールバックモデル（デフォルト: gpt-54-mini）
+dotnet user-secrets set "AzureOpenAI:FallbackDeploymentName" "gpt-54-mini"
 ```
 
 ### 2.2 Azure デプロイ（環境変数 / App Configuration）
@@ -85,7 +85,7 @@ dotnet user-secrets set "AzureOpenAI:FallbackDeploymentName" "gpt-41"
 | --- | --- | --- |
 | `AzureOpenAI__Endpoint` | `https://<name>.openai.azure.com/` | OpenAI エンドポイント |
 | `AzureOpenAI__DeploymentName` | `gpt-55` | プライマリモデル |
-| `AzureOpenAI__FallbackDeploymentName` | `gpt-41` | フォールバックモデル |
+| `AzureOpenAI__FallbackDeploymentName` | `gpt-54-mini` | フォールバックモデル |
 
 ---
 
@@ -167,7 +167,7 @@ dotnet test tests/TeamsAITeammate.AIQualityTests --filter "Category=AIQuality"
 | `src/TeamsAITeammate.AI/Services/QuestionGenerator.cs` | 10種類の深掘り質問を4段階優先度で生成 |
 | `src/TeamsAITeammate.AI/Services/TacitKnowledgeExtractor.cs` | 10カテゴリの暗黙知抽出（confidence < 0.5 フィルター） |
 | `src/TeamsAITeammate.AI/Services/AnalysisScheduler.cs` | InterventionTimer連携の分析オーケストレーター |
-| `src/TeamsAITeammate.AI/Services/ResilientChatClient.cs` | GPT-5.5→GPT-4.1 フォールバック + サーキットブレーカー |
+| `src/TeamsAITeammate.AI/Services/ResilientChatClient.cs` | GPT-5.5→GPT-5.4-mini フォールバック + サーキットブレーカー |
 
 ### プロンプトテンプレート（Semantic Kernel）
 

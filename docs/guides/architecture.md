@@ -16,12 +16,12 @@ graph TB
     end
 
     subgraph "AI Services"
-        AOAI[Azure OpenAI<br/>GPT-5.5 / GPT-4.1]
+        AOAI[Azure OpenAI<br/>GPT-5.5 / GPT-5.4-mini]
         EMB[Embedding Service<br/>text-embedding-3-large]
     end
 
     subgraph "Data Layer"
-        COSMOS[(Cosmos DB<br/>Sessions, Knowledge,<br/>Settings, Audit)]
+        COSMOS[(Cosmos DB<br/>Sessions, Transcripts,<br/>Knowledge)]
         SEARCH[(Azure AI Search<br/>Vector Index)]
         BLOB[(Blob Storage<br/>Transcripts)]
     end
@@ -126,7 +126,7 @@ sequenceDiagram
 | --------- | ------ |
 | Runtime | .NET 10 / ASP.NET Core |
 | Bot Framework | Microsoft 365 Agents SDK |
-| AI | Azure OpenAI (GPT-5.5, GPT-4.1) |
+| AI | Azure OpenAI (GPT-5.5, GPT-5.4-mini) |
 | Vector Search | Azure AI Search + text-embedding-3-large |
 | Database | Azure Cosmos DB |
 | Frontend | React 19 + Fluent UI v9 + TypeScript |

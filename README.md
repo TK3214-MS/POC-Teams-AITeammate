@@ -4,6 +4,26 @@
 
 Teams 会議にAIチームメイトとして参加し、会話をリアルタイムで分析して組織の暗黙知を自動的に蓄積します。
 
+## はじめに
+
+新しい環境へ構築する場合は、次のガイドだけを上から順に実行してください。
+
+### [AI Teammate 環境再現ガイド](docs/reproduction-guide.md)
+
+ソース取得、前提確認、Entra ID、Azure、Teams Channel、アプリパッケージ、動作確認までを一つの経路にまとめています。
+
+```text
+README
+  └─ 環境再現ガイド
+       ├─ ローカルビルド・テスト
+       ├─ Entra ID / Azure構築
+       ├─ Agentデプロイ
+       ├─ Teams登録
+       └─ 動作確認
+```
+
+> フェーズ別手順は実装経緯や個別機能を理解するための資料です。初回構築では環境再現ガイドを優先してください。
+
 ## アーキテクチャ
 
 | プロジェクト | 説明 |
@@ -27,20 +47,33 @@ Teams 会議にAIチームメイトとして参加し、会話をリアルタイ
 
 > Azure リソースのプロビジョニングとアプリのデプロイには `azd` を使用します。Microsoft 365 Agents Toolkit は Teams アプリの開発、マニフェスト検証、ローカルテストに使用します。
 
-## クイックスタート
+## ローカル検証
 
 ```bash
 cd TeamsAITeammate
 
-# ビルド
-dotnet build
+# 前提確認、依存関係復元、ビルド
+chmod +x scripts/setup-dev.sh
+./scripts/setup-dev.sh
 
 # ユニットテスト
-dotnet test tests/TeamsAITeammate.UnitTests
-
-# ローカル起動
-dotnet run --project src/TeamsAITeammate.Agent
+dotnet test tests/TeamsAITeammate.UnitTests/TeamsAITeammate.UnitTests.csproj --no-restore
 ```
+
+Agentの起動にはBot、Azure OpenAI、Cosmos DBなどの設定が必要です。環境構築は[環境再現ガイド](docs/reproduction-guide.md)を参照してください。
+
+## 目的別ドキュメント
+
+| やりたいこと | 最初に読む資料 |
+| --- | --- |
+| 新しい環境へ一から構築する | [環境再現ガイド](docs/reproduction-guide.md) |
+| システム構成・データフローを理解する | [エージェントアーキテクチャ](docs/guides/agent-architecture-visualization.md) |
+| TeamsでAI Teammateを使う | [ユーザーガイド](docs/guides/user-guide.md) |
+| 設定・ナレッジ・ユーザーを管理する | [管理者ガイド](docs/guides/admin-guide.md) |
+| APIやSignalRを利用する | [APIリファレンス](docs/guides/api-reference.md) |
+| 認証・認可・データ保護を確認する | [セキュリティ](docs/guides/security.md) |
+| エラーを解決する | [トラブルシューティング](docs/guides/troubleshooting.md) |
+| 本番運用の詳細を確認する | [本番環境セットアップ手順](docs/production-setup-guide.md) |
 
 ## フェーズ別セットアップ
 
@@ -57,19 +90,6 @@ dotnet run --project src/TeamsAITeammate.Agent
 | Phase 7 | RAG 検索・Copilot 統合 | [phase7-manual-setup.md](docs/phase7-manual-setup.md) |
 | Phase 8 | 管理画面・監視・本番運用 | [phase8-manual-setup.md](docs/phase8-manual-setup.md) |
 
-## ドキュメント
-
-| ドキュメント | 内容 |
-| --- | --- |
-| [アーキテクチャ](docs/guides/architecture.md) | システム構成・レイヤー設計 |
-| [デプロイガイド](docs/guides/deployment-guide.md) | Azure へのデプロイ手順 |
-| [管理者ガイド](docs/guides/admin-guide.md) | エージェント設定・管理画面 |
-| [ユーザーガイド](docs/guides/user-guide.md) | エンドユーザー向け操作説明 |
-| [API リファレンス](docs/guides/api-reference.md) | REST API / SignalR 仕様 |
-| [データモデル](docs/guides/data-model.md) | Cosmos DB コンテナー・スキーマ |
-| [セキュリティ](docs/guides/security.md) | 認証・認可・データ保護 |
-| [トラブルシューティング](docs/guides/troubleshooting.md) | よくある問題と対処法 |
-
 ## インフラストラクチャ
 
 `infra/` フォルダに Bicep テンプレートがあり、`azd up` で以下をプロビジョニングします:
@@ -78,9 +98,10 @@ dotnet run --project src/TeamsAITeammate.Agent
 - Azure Cosmos DB
 - Azure OpenAI
 - Azure AI Search
-- Azure Blob Storage
 - Azure Key Vault
 - Application Insights
+
+Azure Blob Storage、Dataverse、SharePointは構成依存の拡張先で、現行Bicepには含まれません。
 
 ## ライセンス
 

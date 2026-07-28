@@ -7,6 +7,25 @@ on:
         description: 'Docker image tag to deploy'
         required: true
         type: string
+  workflow_call:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy'
+        required: true
+        type: string
+    secrets:
+      AZURE_CLIENT_ID:
+        required: true
+      AZURE_TENANT_ID:
+        required: true
+      AZURE_SUBSCRIPTION_ID:
+        required: true
+      BOT_APP_ID:
+        required: true
+      BOT_APP_PASSWORD:
+        required: true
+      ACR_NAME:
+        required: true
 
 permissions:
   id-token: write
@@ -21,39 +40,55 @@ env:
 jobs:
   deploy-infra:
     runs-on: ubuntu-latest
-    environment: production
     steps:
       - uses: actions/checkout@v4
 
       - name: Azure Login
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          FEDERATED_TOKEN=$(curl --fail --silent --show-error \
+            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=api://AzureADTokenExchange" | jq -r '.value')
+          az login --service-principal \
+            --username "${AZURE_CLIENT_ID}" \
+            --tenant "${AZURE_TENANT_ID}" \
+            --federated-token "${FEDERATED_TOKEN}"
+          az account set --subscription "${AZURE_SUBSCRIPTION_ID}"
 
       - name: Deploy Bicep (Production)
-        uses: azure/arm-deploy@v2
-        with:
-          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP }}
-          template: TeamsAITeammate/infra/main.bicep
-          parameters: >-
-            environmentName=prod
-            botAppId=${{ secrets.BOT_APP_ID }}
-            botAppPassword=${{ secrets.BOT_APP_PASSWORD }}
-            imageTag=${{ inputs.image_tag }}
+        env:
+          BOT_APP_ID: ${{ secrets.BOT_APP_ID }}
+          BOT_APP_PASSWORD: ${{ secrets.BOT_APP_PASSWORD }}
+        run: |
+          az deployment group create \
+            --resource-group "${AZURE_RESOURCE_GROUP}" \
+            --template-file TeamsAITeammate/infra/main.bicep \
+            --parameters \
+              environmentName=prod \
+              botAppId="${BOT_APP_ID}" \
+              botAppPassword="${BOT_APP_PASSWORD}"
 
   blue-green-deploy:
     needs: deploy-infra
     runs-on: ubuntu-latest
-    environment: production
     steps:
       - name: Azure Login
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          FEDERATED_TOKEN=$(curl --fail --silent --show-error \
+            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=api://AzureADTokenExchange" | jq -r '.value')
+          az login --service-principal \
+            --username "${AZURE_CLIENT_ID}" \
+            --tenant "${AZURE_TENANT_ID}" \
+            --federated-token "${FEDERATED_TOKEN}"
+          az account set --subscription "${AZURE_SUBSCRIPTION_ID}"
 
       - name: Deploy new revision (0% traffic)
         run: |
