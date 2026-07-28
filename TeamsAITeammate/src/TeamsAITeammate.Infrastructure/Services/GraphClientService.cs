@@ -10,8 +10,14 @@ public class GraphClientService
 
     public GraphClientService(IConfiguration configuration)
     {
-        var credential = new DefaultAzureCredential();
-        _client = new GraphServiceClient(credential);
+        var tenantId = configuration["Agents:MicrosoftAppTenantId"]
+            ?? throw new InvalidOperationException("Agents:MicrosoftAppTenantId is required");
+        var clientId = configuration["Agents:MicrosoftAppId"]
+            ?? throw new InvalidOperationException("Agents:MicrosoftAppId is required");
+        var clientSecret = configuration["Agents:MicrosoftAppPassword"]
+            ?? throw new InvalidOperationException("Agents:MicrosoftAppPassword is required");
+        var credential = new ClientSecretCredential(tenantId, clientId, clientSecret);
+        _client = new GraphServiceClient(credential, ["https://graph.microsoft.com/.default"]);
     }
 
     public GraphServiceClient Client => _client;

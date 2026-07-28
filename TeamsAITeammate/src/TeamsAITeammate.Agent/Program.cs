@@ -125,9 +125,13 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.UseAgents();
+app.MapDefaultAgentEndpoints();
 app.MapControllers();
 app.MapHub<MeetingAnalysisHub>("/hubs/meeting-analysis");
 app.MapHealthChecks("/healthz");
+app.MapFallbackToFile("index.html");
 
 app.Run();

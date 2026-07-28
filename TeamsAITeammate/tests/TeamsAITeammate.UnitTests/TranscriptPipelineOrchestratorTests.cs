@@ -12,6 +12,7 @@ public class TranscriptPipelineOrchestratorTests
     private readonly Mock<IInterventionTimer> _timerMock = new();
     private readonly Mock<ILanguageDetector> _detectorMock = new();
     private readonly Mock<ITranscriptPersistence> _persistenceMock = new();
+    private readonly Mock<ITranscriptRepository> _transcriptsMock = new();
     private readonly Mock<IMeetingSessionManager> _sessionManagerMock = new();
     private readonly Mock<ILogger<TranscriptPipelineOrchestrator>> _loggerMock = new();
 
@@ -24,6 +25,7 @@ public class TranscriptPipelineOrchestratorTests
             _timerMock.Object,
             _detectorMock.Object,
             _persistenceMock.Object,
+            _transcriptsMock.Object,
             _sessionManagerMock.Object,
             _loggerMock.Object);
     }
@@ -142,6 +144,12 @@ public class TranscriptPipelineOrchestratorTests
         _bufferMock.Verify(b => b.AppendAsync(segment, It.IsAny<CancellationToken>()), Times.Once);
         _persistenceMock.Verify(p => p.AppendSegmentAsync(
             "t1", "m1", session.Id, segment, It.IsAny<CancellationToken>()), Times.Once);
+        _transcriptsMock.Verify(p => p.AddAsync(
+            It.Is<TranscriptEntry>(entry =>
+                entry.SessionId == session.Id &&
+                entry.SpeakerName == "Alice" &&
+                entry.Text == "Hello"),
+            It.IsAny<CancellationToken>()), Times.Once);
         _timerMock.Verify(t => t.ResetSilenceTimerAsync(session.Id, It.IsAny<CancellationToken>()), Times.Once);
     }
 

@@ -88,6 +88,20 @@ module containerApp 'modules/container-app.bicep' = {
   }
 }
 
+resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' existing = {
+  name: '${resourceName}-cosmos'
+}
+
+resource cosmosDataContributor 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2024-05-15' = {
+  parent: cosmosAccount
+  name: guid(cosmosAccount.id, '${resourceName}-app-identity', 'cosmos-data-contributor')
+  properties: {
+    principalId: containerApp.outputs.identityPrincipalId
+    roleDefinitionId: '${cosmosAccount.id}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002'
+    scope: cosmosAccount.id
+  }
+}
+
 // ---------- Outputs ----------
 output containerAppFqdn string = containerApp.outputs.fqdn
 output cosmosDbEndpoint string = cosmosDb.outputs.endpoint

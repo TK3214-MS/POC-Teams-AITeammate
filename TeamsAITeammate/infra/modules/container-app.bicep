@@ -134,6 +134,13 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'Agents__MicrosoftAppId', value: botAppId }
             { name: 'Agents__MicrosoftAppPassword', secretRef: 'bot-app-password' }
             { name: 'Agents__MicrosoftAppTenantId', value: subscription().tenantId }
+            { name: 'Connections__ServiceConnection__Settings__AuthType', value: 'ClientSecret' }
+            { name: 'Connections__ServiceConnection__Settings__AuthorityEndpoint', value: '${environment().authentication.loginEndpoint}${subscription().tenantId}' }
+            { name: 'Connections__ServiceConnection__Settings__ClientId', value: botAppId }
+            { name: 'Connections__ServiceConnection__Settings__ClientSecret', secretRef: 'bot-app-password' }
+            { name: 'Connections__ServiceConnection__Settings__Scopes__0', value: 'https://api.botframework.com/.default' }
+            { name: 'ConnectionsMap__0__ServiceUrl', value: '*' }
+            { name: 'ConnectionsMap__0__Connection', value: 'ServiceConnection' }
             { name: 'CosmosDb__Endpoint', value: cosmosDbEndpoint }
             { name: 'AzureOpenAI__Endpoint', value: openAiEndpoint }
             { name: 'AzureAISearch__Endpoint', value: aiSearchEndpoint }

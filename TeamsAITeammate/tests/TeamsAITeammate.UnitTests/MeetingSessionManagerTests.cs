@@ -173,10 +173,14 @@ public class MeetingSessionManagerTests
     }
 
     [Fact]
-    public async Task GetActiveSessionsAsync_ReturnsEmptyList()
+    public async Task GetActiveSessionsAsync_ReturnsRepositoryResults()
     {
+        var sessions = new[] { new MeetingSession { State = SessionState.Active } };
+        _repositoryMock.Setup(r => r.GetActiveAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessions);
+
         var result = await _manager.GetActiveSessionsAsync();
 
-        Assert.Empty(result);
+        Assert.Same(sessions, result);
     }
 }

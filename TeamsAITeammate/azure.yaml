@@ -7,8 +7,9 @@ services:
     host: containerapp
     language: dotnet
     docker:
-      path: Dockerfile
-      context: .
+      path: ../../Dockerfile
+      context: ../..
+      remoteBuild: true
 infra:
   provider: bicep
   path: infra

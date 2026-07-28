@@ -15,11 +15,19 @@ COPY src/ src/
 WORKDIR /src/src/TeamsAITeammate.Agent
 RUN dotnet build -c Release -o /app/build
 
+FROM node:22-alpine AS sidepanel-build
+WORKDIR /src
+COPY ["src/TeamsAITeammate.SidePanel/package.json", "src/TeamsAITeammate.SidePanel/package-lock.json", "./"]
+RUN npm ci
+COPY ["src/TeamsAITeammate.SidePanel/", "./"]
+RUN npm run build
+
 FROM build AS publish
 RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+COPY --from=sidepanel-build /src/dist ./wwwroot
 ENV ASPNETCORE_URLS=http://+:8080
 ENTRYPOINT ["dotnet", "TeamsAITeammate.Agent.dll"]

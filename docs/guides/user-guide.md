@@ -12,10 +12,14 @@ AI Teammateは、Teams会議にAIチームメイトとして参加し、会話�
 
 #### 事前準備
 
+AI TeammateがTeamsのアプリ一覧にない場合は、先に管理者が `TeamsAITeammate/ai-teammate-app.zip` をTeams管理センターの **Teamsアプリ > アプリを管理 > 新しいアプリをアップロード** から登録します。既存アプリを更新する場合も同じZIPをアップロードしてください。現在の会議サイドパネル対応パッケージはversion 1.0.2です。
+
 1. Teamsで対象の会議を開きます。
-2. 会議画面の **アプリ** から **AI Teammate** を追加します。
+2. 会議画面の **アプリ** から **AI Teammate** を追加します。**アプリ** が上部にない場合は **その他 (...) > アプリを追加** を開きます。
 3. 会議チャットを開き、AI Teammateが利用可能になっていることを確認します。
 4. 会議の文字起こしを開始します。AI TeammateはTeamsのトランスクリプトを分析するため、文字起こしが無効な会議では分析できません。
+
+アプリ更新後も表示されない場合はTeamsを完全終了して再起動し、組織内ユーザーが作成した予定済みの会議で確認してください。管理者はTeams管理センターのアプリ許可ポリシーでAI Teammateがブロックされていないことも確認します。
 
 #### 分析を開始する
 
@@ -110,6 +114,20 @@ az containerapp logs show \
 ```
 
 メッセージ受信時には `Parsed command: join` が記録されます。ログ自体が出ない場合はTeamsアプリ、Bot ID、またはAzure Botのメッセージングエンドポイントを確認してください。
+
+Botの受信ルートも確認できます。
+
+```bash
+curl --request POST \
+  --header 'Content-Type: application/json' \
+  --data '{}' \
+  --output /dev/null \
+  --write-out '%{http_code}\n' \
+  'https://<container-app-fqdn>/api/messages'
+```
+
+- `400` または `401`: 受信ルートは存在します。Bot ID、認証情報、Teamsアプリの追加状態を確認してください。
+- `404`: Agentの受信ルートがデプロイされていません。`app.MapDefaultAgentEndpoints()` を含む最新版をContainer Appへデプロイしてください。
 
 **Q: AI Teammateが会議の参加者一覧に表示されません。**
 A: 現在の実装はCalling/Media Botではないため、音声・映像の参加者一覧には表示されません。`join` は会議チャット上の分析セッションを開始するコマンドです。

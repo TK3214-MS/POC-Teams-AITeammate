@@ -3,6 +3,7 @@ namespace TeamsAITeammate.Core.Models;
 public record MeetingSession
 {
     public string Id { get; init; } = Guid.NewGuid().ToString();
+    public string id => Id;
     public string TenantId { get; init; } = string.Empty;
     public string MeetingId { get; init; } = string.Empty;
     public string OrganizerId { get; init; } = string.Empty;

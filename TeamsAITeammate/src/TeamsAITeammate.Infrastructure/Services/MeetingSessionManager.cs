@@ -75,8 +75,7 @@ public class MeetingSessionManager : IMeetingSessionManager
 
     public async Task<IReadOnlyList<MeetingSession>> GetActiveSessionsAsync(CancellationToken ct = default)
     {
-        // Returns empty for now — production would query by active states
-        return [];
+        return await _repository.GetActiveAsync(ct);
     }
 
     public async Task UpdateSessionStateAsync(string sessionId, SessionState state, CancellationToken ct = default)

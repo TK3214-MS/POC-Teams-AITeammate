@@ -13,6 +13,7 @@ public class TranscriptPipelineOrchestrator : IHostedService, IDisposable
     private readonly IInterventionTimer _interventionTimer;
     private readonly ILanguageDetector _languageDetector;
     private readonly ITranscriptPersistence _persistence;
+    private readonly ITranscriptRepository _transcripts;
     private readonly IMeetingSessionManager _sessionManager;
     private readonly ILogger<TranscriptPipelineOrchestrator> _logger;
 
@@ -29,6 +30,7 @@ public class TranscriptPipelineOrchestrator : IHostedService, IDisposable
         IInterventionTimer interventionTimer,
         ILanguageDetector languageDetector,
         ITranscriptPersistence persistence,
+        ITranscriptRepository transcripts,
         IMeetingSessionManager sessionManager,
         ILogger<TranscriptPipelineOrchestrator> logger)
     {
@@ -37,6 +39,7 @@ public class TranscriptPipelineOrchestrator : IHostedService, IDisposable
         _interventionTimer = interventionTimer;
         _languageDetector = languageDetector;
         _persistence = persistence;
+        _transcripts = transcripts;
         _sessionManager = sessionManager;
         _logger = logger;
 
@@ -152,6 +155,17 @@ public class TranscriptPipelineOrchestrator : IHostedService, IDisposable
 
                 await _persistence.AppendSegmentAsync(
                     session.TenantId, session.MeetingId, session.Id, segment, ct);
+
+                await _transcripts.AddAsync(new TranscriptEntry
+                {
+                    SessionId = session.Id,
+                    SpeakerId = segment.SpeakerId,
+                    SpeakerName = segment.SpeakerName,
+                    Text = segment.Text,
+                    Timestamp = segment.Timestamp,
+                    Confidence = segment.Confidence,
+                    Language = segment.Language,
+                }, ct);
 
                 await _interventionTimer.ResetSilenceTimerAsync(session.Id, ct);
 

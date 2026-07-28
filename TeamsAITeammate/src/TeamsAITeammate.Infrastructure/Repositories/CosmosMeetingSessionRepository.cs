@@ -35,16 +35,41 @@ public class CosmosMeetingSessionRepository : IMeetingSessionRepository
 
     public async Task<MeetingSession?> GetByMeetingIdAsync(string meetingId, CancellationToken ct = default)
     {
-        var query = new QueryDefinition("SELECT * FROM c WHERE c.MeetingId = @meetingId ORDER BY c.CreatedAt DESC OFFSET 0 LIMIT 1")
+        var query = new QueryDefinition("SELECT * FROM c WHERE c.MeetingId = @meetingId")
             .WithParameter("@meetingId", meetingId);
 
         using var iterator = _container.GetItemQueryIterator<MeetingSession>(query);
-        if (iterator.HasMoreResults)
+        MeetingSession? latestSession = null;
+        while (iterator.HasMoreResults)
         {
             var response = await iterator.ReadNextAsync(ct);
-            return response.FirstOrDefault();
+            foreach (var session in response)
+            {
+                if (latestSession is null || session.CreatedAt > latestSession.CreatedAt)
+                    latestSession = session;
+            }
         }
-        return null;
+        return latestSession;
+    }
+
+    public async Task<IReadOnlyList<MeetingSession>> GetActiveAsync(CancellationToken ct = default)
+    {
+        var query = new QueryDefinition(
+                "SELECT * FROM c WHERE (c.State = @active OR c.State = @analyzing OR c.State = @paused) " +
+                "AND NOT CONTAINS(c.MeetingId, @legacyConversationMarker)")
+            .WithParameter("@active", SessionState.Active)
+            .WithParameter("@analyzing", SessionState.Analyzing)
+            .WithParameter("@paused", SessionState.Paused)
+            .WithParameter("@legacyConversationMarker", ";messageid=");
+
+        var results = new List<MeetingSession>();
+        using var iterator = _container.GetItemQueryIterator<MeetingSession>(query);
+        while (iterator.HasMoreResults)
+        {
+            var response = await iterator.ReadNextAsync(ct);
+            results.AddRange(response);
+        }
+        return results;
     }
 
     public async Task<IReadOnlyList<MeetingSession>> GetByTenantAsync(string tenantId, int limit = 50, CancellationToken ct = default)

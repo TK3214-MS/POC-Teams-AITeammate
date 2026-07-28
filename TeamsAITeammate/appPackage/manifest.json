@@ -1,7 +1,7 @@
 {
   "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.19/MicrosoftTeams.schema.json",
   "manifestVersion": "1.19",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "id": "e8ce26fe-665b-4e51-bb7b-8483d7bb0f08",
   "developer": {
     "name": "AI Teammate Team",
@@ -51,6 +51,10 @@
       "context": ["meetingSidePanel"]
     }
   ],
+  "defaultInstallScope": "meetings",
+  "defaultGroupCapability": {
+    "meetings": "tab"
+  },
   "permissions": ["identity", "messageTeamMembers"],
   "validDomains": ["aiteammate-dev-mfxwfpuo7stza-app.kinddune-aee006e4.japaneast.azurecontainerapps.io"]
 }

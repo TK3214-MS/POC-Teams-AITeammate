@@ -16,6 +16,7 @@ public class TeammateAgent : AgentApplication
     private readonly IMeetingSessionManager _sessionManager;
     private readonly IMeetingSessionRepository _sessions;
     private readonly ITranscriptRepository _transcripts;
+    private readonly IReadOnlyList<ITranscriptProvider> _transcriptProviders;
     private readonly IKnowledgeRepository _knowledge;
     private readonly ICommandParser _commandParser;
     private readonly IInterventionTimer _interventionTimer;
@@ -29,6 +30,7 @@ public class TeammateAgent : AgentApplication
         IMeetingSessionManager sessionManager,
         IMeetingSessionRepository sessions,
         ITranscriptRepository transcripts,
+        IEnumerable<ITranscriptProvider> transcriptProviders,
         IKnowledgeRepository knowledge,
         ICommandParser commandParser,
         IInterventionTimer interventionTimer,
@@ -41,6 +43,7 @@ public class TeammateAgent : AgentApplication
         _sessionManager = sessionManager;
         _sessions = sessions;
         _transcripts = transcripts;
+        _transcriptProviders = transcriptProviders.ToList();
         _knowledge = knowledge;
         _commandParser = commandParser;
         _interventionTimer = interventionTimer;
@@ -91,7 +94,7 @@ public class TeammateAgent : AgentApplication
             {
                 _logger.LogInformation("Bot removed from conversation {ConversationId}", turnContext.Activity.Conversation?.Id);
 
-                var meetingId = turnContext.Activity.Conversation?.Id ?? string.Empty;
+                var meetingId = GetMeetingId(turnContext.Activity);
                 var session = await _sessionManager.GetActiveSessionAsync(meetingId, ct);
                 if (session is not null)
                 {
@@ -110,19 +113,28 @@ public class TeammateAgent : AgentApplication
         _logger.LogInformation("Parsed command: {Command} (recognized: {IsRecognized}) from: {Original}",
             command.Command, command.IsRecognized, command.OriginalText);
 
-        var response = command.Command switch
+        string response;
+        try
         {
-            "join" => await HandleJoinCommandAsync(turnContext, ct),
-            "status" => await HandleStatusCommandAsync(turnContext, ct),
-            "summarize" => await HandleSummarizeCommandAsync(turnContext, ct),
-            "ask" => await HandleAskCommandAsync(turnContext, command.Argument, ct),
-            "pause" => await HandlePauseCommandAsync(turnContext, ct),
-            "resume" => await HandleResumeCommandAsync(turnContext, ct),
-            "settings" => HandleSettingsCommand(),
-            "leave" => await HandleLeaveCommandAsync(turnContext, ct),
-            "help" => HandleHelpCommand(),
-            _ => $"「{rawText}」を受信しました。コマンド一覧は **help** と入力してください。",
-        };
+            response = command.Command switch
+            {
+                "join" => await HandleJoinCommandAsync(turnContext, ct),
+                "status" => await HandleStatusCommandAsync(turnContext, ct),
+                "summarize" => await HandleSummarizeCommandAsync(turnContext, ct),
+                "ask" => await HandleAskCommandAsync(turnContext, command.Argument, ct),
+                "pause" => await HandlePauseCommandAsync(turnContext, ct),
+                "resume" => await HandleResumeCommandAsync(turnContext, ct),
+                "settings" => HandleSettingsCommand(),
+                "leave" => await HandleLeaveCommandAsync(turnContext, ct),
+                "help" => HandleHelpCommand(),
+                _ => $"「{rawText}」を受信しました。コマンド一覧は **help** と入力してください。",
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to process command {Command}", command.Command);
+            response = "⚠️ コマンドの処理に失敗しました。しばらくしてからもう一度お試しください。";
+        }
 
         await turnContext.SendActivityAsync(response, cancellationToken: ct);
     }
@@ -151,7 +163,7 @@ public class TeammateAgent : AgentApplication
 
     private async Task OnTeamsMeetingStartAsync(ITurnContext turnContext, CancellationToken ct)
     {
-        var meetingId = turnContext.Activity.Conversation?.Id ?? string.Empty;
+        var meetingId = GetMeetingId(turnContext.Activity);
         var tenantId = turnContext.Activity.Conversation?.TenantId ?? string.Empty;
         _logger.LogInformation("Meeting started: {MeetingId} in tenant {TenantId}", meetingId, tenantId);
 
@@ -162,7 +174,7 @@ public class TeammateAgent : AgentApplication
 
     private async Task OnTeamsMeetingEndAsync(ITurnContext turnContext, CancellationToken ct)
     {
-        var meetingId = turnContext.Activity.Conversation?.Id ?? string.Empty;
+        var meetingId = GetMeetingId(turnContext.Activity);
         _logger.LogInformation("Meeting ended: {MeetingId}", meetingId);
 
         var session = await _sessionManager.GetActiveSessionAsync(meetingId, ct);
@@ -198,7 +210,7 @@ public class TeammateAgent : AgentApplication
 
     private async Task<string> HandleJoinCommandAsync(ITurnContext turnContext, CancellationToken ct)
     {
-        var meetingId = turnContext.Activity.Conversation?.Id ?? string.Empty;
+        var meetingId = GetMeetingId(turnContext.Activity);
         var tenantId = turnContext.Activity.Conversation?.TenantId ?? string.Empty;
         var organizerId = turnContext.Activity.From?.Id ?? string.Empty;
 
@@ -217,7 +229,7 @@ public class TeammateAgent : AgentApplication
 
     private async Task<string> HandleStatusCommandAsync(ITurnContext turnContext, CancellationToken ct)
     {
-        var meetingId = turnContext.Activity.Conversation?.Id ?? string.Empty;
+        var meetingId = GetMeetingId(turnContext.Activity);
         var session = await _sessionManager.GetActiveSessionAsync(meetingId, ct);
 
         if (session is null)
@@ -235,19 +247,34 @@ public class TeammateAgent : AgentApplication
 
     private async Task<string> HandleSummarizeCommandAsync(ITurnContext turnContext, CancellationToken ct)
     {
-        var meetingId = turnContext.Activity.Conversation?.Id ?? string.Empty;
-        var session = await _sessionManager.GetActiveSessionAsync(meetingId, ct);
+        var meetingId = GetMeetingId(turnContext.Activity);
+        var session = await _sessions.GetByMeetingIdAsync(meetingId, ct);
 
         if (session is null)
-            return "サマリーを生成するアクティブなセッションがありません。";
+            return "サマリーを生成するセッションがありません。先に `join` を実行してください。";
 
         var entries = await _transcripts.GetBySessionAsync(session.Id, ct);
         if (entries.Count == 0)
-            return "トランスクリプトがまだありません。";
+            entries = await ImportFinalizedTranscriptAsync(session, ct);
 
-        await _sessionManager.UpdateSessionStateAsync(session.Id, SessionState.Analyzing, ct);
-        var summary = await _analysisEngine.GenerateSummaryAsync(entries, ct);
-        await _sessionManager.UpdateSessionStateAsync(session.Id, SessionState.Active, ct);
+        if (entries.Count == 0)
+            return "Teams画面にはライブ字幕が表示されていますが、Microsoft Graphのトランスクリプトはまだ確定していません。会議終了後、数分待ってから `summarize` を再実行してください。";
+
+        var originalState = session.State;
+        var stateChanged = originalState is SessionState.Active or SessionState.Paused;
+        if (stateChanged)
+            await _sessionManager.UpdateSessionStateAsync(session.Id, SessionState.Analyzing, ct);
+
+        string summary;
+        try
+        {
+            summary = await _analysisEngine.GenerateSummaryAsync(entries, ct);
+        }
+        finally
+        {
+            if (stateChanged)
+                await _sessionManager.UpdateSessionStateAsync(session.Id, originalState, ct);
+        }
 
         return $"📝 会話サマリー:\n\n{summary}";
     }
@@ -270,7 +297,7 @@ public class TeammateAgent : AgentApplication
 
     private async Task<string> HandlePauseCommandAsync(ITurnContext turnContext, CancellationToken ct)
     {
-        var meetingId = turnContext.Activity.Conversation?.Id ?? string.Empty;
+        var meetingId = GetMeetingId(turnContext.Activity);
         var session = await _sessionManager.GetActiveSessionAsync(meetingId, ct);
 
         if (session is null)
@@ -286,7 +313,7 @@ public class TeammateAgent : AgentApplication
 
     private async Task<string> HandleResumeCommandAsync(ITurnContext turnContext, CancellationToken ct)
     {
-        var meetingId = turnContext.Activity.Conversation?.Id ?? string.Empty;
+        var meetingId = GetMeetingId(turnContext.Activity);
         var session = await _sessionManager.GetActiveSessionAsync(meetingId, ct);
 
         if (session is null)
@@ -312,6 +339,47 @@ public class TeammateAgent : AgentApplication
                "設定の変更はサイドパネルから行えます。";
     }
 
+    private async Task<IReadOnlyList<TranscriptEntry>> ImportFinalizedTranscriptAsync(
+        MeetingSession session,
+        CancellationToken ct)
+    {
+        var provider = _transcriptProviders.FirstOrDefault(p => p.ProviderName == "GraphAPI");
+        if (provider is null)
+            return [];
+
+        try
+        {
+            var segments = await provider.GetFullTranscriptAsync(session.MeetingId, ct);
+            foreach (var segment in segments)
+            {
+                await _transcripts.AddAsync(new TranscriptEntry
+                {
+                    SessionId = session.Id,
+                    SpeakerId = segment.SpeakerId,
+                    SpeakerName = segment.SpeakerName,
+                    Text = segment.Text,
+                    Timestamp = segment.Timestamp,
+                    Confidence = segment.Confidence,
+                    Language = segment.Language,
+                }, ct);
+            }
+
+            return await _transcripts.GetBySessionAsync(session.Id, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Finalized transcript is not available for meeting {MeetingId}", session.MeetingId);
+            return [];
+        }
+    }
+
+    internal static string GetMeetingId(IActivity activity)
+    {
+        return activity.TeamsGetMeetingInfo()?.Id
+            ?? activity.Conversation?.Id
+            ?? string.Empty;
+    }
+
     private async Task OnInvokeActivityAsync(ITurnContext turnContext, ITurnState turnState, CancellationToken ct)
     {
         var activity = turnContext.Activity;
@@ -323,7 +391,7 @@ public class TeammateAgent : AgentApplication
         var verb = value["action"]?["verb"]?.ToString() ?? string.Empty;
         var data = value["action"]?["data"]?.ToObject<Dictionary<string, object>>() ?? [];
 
-        var meetingId = activity.Conversation?.Id ?? string.Empty;
+        var meetingId = GetMeetingId(activity);
         var session = await _sessionManager.GetActiveSessionAsync(meetingId, ct);
         var sessionId = session?.Id ?? string.Empty;
 
@@ -335,7 +403,7 @@ public class TeammateAgent : AgentApplication
 
     private async Task<string> HandleLeaveCommandAsync(ITurnContext turnContext, CancellationToken ct)
     {
-        var meetingId = turnContext.Activity.Conversation?.Id ?? string.Empty;
+        var meetingId = GetMeetingId(turnContext.Activity);
         var session = await _sessionManager.GetActiveSessionAsync(meetingId, ct);
 
         if (session is null)

@@ -3,6 +3,7 @@ namespace TeamsAITeammate.Core.Models;
 public record TranscriptEntry
 {
     public string Id { get; init; } = Guid.NewGuid().ToString();
+    public string id => Id;
     public string SessionId { get; init; } = string.Empty;
     public string SpeakerId { get; init; } = string.Empty;
     public string SpeakerName { get; init; } = string.Empty;
