@@ -38,6 +38,13 @@ APP_ID=$(az ad app create \
 
 echo "  App ID: $APP_ID"
 
+SCOPE_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+az ad app update \
+    --id "$APP_ID" \
+    --identifier-uris "api://$APP_ID" \
+    --set "api.oauth2PermissionScopes=[{\"adminConsentDescription\":\"Allow Teams to call the AI Teammate API on behalf of the signed-in user.\",\"adminConsentDisplayName\":\"Access AI Teammate API\",\"id\":\"$SCOPE_ID\",\"isEnabled\":true,\"type\":\"User\",\"userConsentDescription\":\"Allow Teams to call the AI Teammate API on your behalf.\",\"userConsentDisplayName\":\"Access AI Teammate API\",\"value\":\"access_as_user\"}]" \
+    --set "api.preAuthorizedApplications=[{\"appId\":\"1fec8e78-bce4-4aaf-ab1b-5451cc387264\",\"delegatedPermissionIds\":[\"$SCOPE_ID\"]},{\"appId\":\"5e3ce6c0-2b1f-4285-8d4b-75ee78787346\",\"delegatedPermissionIds\":[\"$SCOPE_ID\"]}]"
+
 # Create a client secret
 SECRET=$(az ad app credential reset \
     --id "$APP_ID" \

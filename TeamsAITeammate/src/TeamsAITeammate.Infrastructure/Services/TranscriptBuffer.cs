@@ -15,16 +15,16 @@ public class TranscriptBuffer : ITranscriptBuffer
         _logger = logger;
     }
 
-    public Task AppendAsync(TranscriptSegment segment, CancellationToken ct = default)
+    public Task AppendAsync(string sessionId, TranscriptSegment segment, CancellationToken ct = default)
     {
-        var list = _buffers.GetOrAdd(segment.MeetingId, _ => []);
+        var list = _buffers.GetOrAdd(sessionId, _ => []);
         lock (list)
         {
             list.Add(segment);
         }
 
-        _logger.LogDebug("Buffered segment for meeting {MeetingId}, speaker {Speaker}",
-            segment.MeetingId, segment.SpeakerName);
+        _logger.LogDebug("Buffered segment for session {SessionId}, speaker {Speaker}",
+            sessionId, segment.SpeakerName);
 
         return Task.CompletedTask;
     }

@@ -2,9 +2,12 @@ using Azure.AI.OpenAI;
 using Azure.Identity;
 using Azure.Storage.Blobs;
 using Microsoft.Agents.Hosting.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.AI;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.SemanticKernel;
 using TeamsAITeammate.Agent.Hubs;
+using TeamsAITeammate.Agent.Services;
 using TeamsAITeammate.AI.Services;
 using TeamsAITeammate.Core.Interfaces;
 using TeamsAITeammate.Infrastructure.Repositories;
@@ -14,6 +17,34 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddAgentDefaults()
     .AddAgent<TeammateAgent>();
+
+var tenantId = builder.Configuration["Agents:MicrosoftAppTenantId"];
+var teamsTabAudience = builder.Configuration["TeamsTabAuth:Audience"];
+builder.Services.AddAuthentication()
+    .AddJwtBearer("TeamsTab", options =>
+    {
+        options.Authority = $"https://login.microsoftonline.com/{tenantId}/v2.0";
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidAudience = teamsTabAudience,
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var token = context.Request.Query["access_token"];
+                if (!string.IsNullOrEmpty(token) &&
+                    context.HttpContext.Request.Path.StartsWithSegments("/hubs/meeting-analysis"))
+                {
+                    context.Token = token;
+                }
+                return Task.CompletedTask;
+            },
+        };
+    });
+builder.Services.AddAuthorization();
 
 // Application Insights
 builder.Services.AddApplicationInsightsTelemetry();
@@ -60,10 +91,8 @@ builder.Services.AddSingleton<IGraphMeetingClient, GraphMeetingClient>();
 builder.Services.AddSingleton<IInterventionTimer, InterventionTimer>();
 
 // Phase 3 services — Transcript pipeline
-builder.Services.AddSingleton<ITranscriptProvider, WorkIQTranscriptProvider>();
 builder.Services.AddSingleton<ITranscriptProvider, GraphTranscriptProvider>();
 builder.Services.AddSingleton<ITranscriptBuffer, TranscriptBuffer>();
-builder.Services.AddSingleton<ILanguageDetector, LanguageDetector>();
 builder.Services.AddSingleton(sp =>
 {
     var endpoint = builder.Configuration["BlobStorage:Endpoint"];
@@ -74,7 +103,8 @@ builder.Services.AddSingleton(sp =>
     return new BlobServiceClient(connectionString);
 });
 builder.Services.AddSingleton<ITranscriptPersistence, TranscriptPersistenceService>();
-builder.Services.AddHostedService<TranscriptPipelineOrchestrator>();
+builder.Services.AddSingleton<ITranscriptIngestionService, TranscriptIngestionService>();
+builder.Services.AddSingleton<ISpeechTokenService, SpeechTokenService>();
 
 // Phase 4 services — AI Analysis Engine
 builder.Services.AddSingleton<ConversationAnalyzer>();
@@ -82,6 +112,7 @@ builder.Services.AddSingleton<IConversationAnalyzer, RagEnhancedConversationAnal
 builder.Services.AddSingleton<IQuestionGenerator, QuestionGenerator>();
 builder.Services.AddSingleton<ITacitKnowledgeExtractor, TacitKnowledgeExtractor>();
 builder.Services.AddSingleton<IAnalysisScheduler, AnalysisScheduler>();
+builder.Services.AddHostedService<AnalysisBroadcastService>();
 
 // Phase 5 services — Agent Intervention & UI
 builder.Services.AddSingleton<INotificationThrottler, NotificationThrottler>();
@@ -127,6 +158,8 @@ var app = builder.Build();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAgents();
 app.MapDefaultAgentEndpoints();
 app.MapControllers();

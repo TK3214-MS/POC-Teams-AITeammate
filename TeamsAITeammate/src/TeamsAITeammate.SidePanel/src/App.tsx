@@ -81,7 +81,11 @@ const App: React.FC = () => {
         {/* Tab content */}
         <div className={styles.content}>
           {activeTab === 'dashboard' && (
-            <AnalysisDashboard analysis={signalR.analysis} speakerStats={[]} />
+            <AnalysisDashboard
+              analysis={signalR.analysis}
+              speakerStats={[]}
+              meetingId={teamsContext.meetingId}
+            />
           )}
           {activeTab === 'knowledge' && (
             <KnowledgeList entries={signalR.knowledge.map(k => ({

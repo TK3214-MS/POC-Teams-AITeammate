@@ -162,7 +162,7 @@ public class AnalysisScheduler : IAnalysisScheduler
             var analysis = await _analyzer.AnalyzeAsync(window, context, ct);
 
             state.LastAnalysis = analysis;
-            OnAnalysisCompleted?.Invoke(sessionId, analysis);
+            await PublishAnalysisAsync(sessionId, analysis);
 
             _logger.LogInformation(
                 "Incremental analysis completed for {SessionId}: {TopicCount} topics, {DecisionCount} decisions",
@@ -215,7 +215,7 @@ public class AnalysisScheduler : IAnalysisScheduler
                 state.AskedQuestionIds.Add(q.Id);
 
             state.LastAnalysis = analysis;
-            OnAnalysisCompleted?.Invoke(sessionId, analysis);
+            await PublishAnalysisAsync(sessionId, analysis);
 
             _logger.LogInformation(
                 "Full analysis completed for {SessionId}: {TopicCount} topics, {QuestionCount} questions, {TacitCount} tacit knowledge",
@@ -264,7 +264,7 @@ public class AnalysisScheduler : IAnalysisScheduler
                 state.AskedQuestionIds.Add(q.Id);
 
             state.LastAnalysis = analysis;
-            OnAnalysisCompleted?.Invoke(sessionId, analysis);
+            await PublishAnalysisAsync(sessionId, analysis);
 
             _logger.LogInformation(
                 "Topic change analysis for {SessionId}: {TacitCount} tacit knowledge, {QuestionCount} questions",
@@ -290,6 +290,15 @@ public class AnalysisScheduler : IAnalysisScheduler
             DetectedLanguage = state.DetectedLanguage,
             PreviousAnalysis = state.LastAnalysis
         };
+    }
+
+    private async Task PublishAnalysisAsync(string sessionId, ConversationAnalysis analysis)
+    {
+        var handlers = OnAnalysisCompleted?.GetInvocationList()
+            .Cast<Func<string, ConversationAnalysis, Task>>()
+            .ToList() ?? [];
+        foreach (var handler in handlers)
+            await handler(sessionId, analysis);
     }
 
     internal class SchedulerState

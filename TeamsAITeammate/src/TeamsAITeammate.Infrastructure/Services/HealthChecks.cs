@@ -34,7 +34,8 @@ public class AzureOpenAIHealthCheck : IHealthCheck
             client.Timeout = TimeSpan.FromSeconds(5);
             var response = await client.GetAsync(new Uri(new Uri(endpoint), "openai/models?api-version=2025-06-01-preview"), ct);
 
-            return response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.Unauthorized
+            return response.IsSuccessStatusCode || response.StatusCode is System.Net.HttpStatusCode.Unauthorized
+                or System.Net.HttpStatusCode.NotFound
                 ? HealthCheckResult.Healthy("Azure OpenAI is reachable")
                 : HealthCheckResult.Degraded($"Azure OpenAI returned {response.StatusCode}");
         }
@@ -157,7 +158,8 @@ public class TranscriptProviderHealthCheck : IHealthCheck
     {
         try
         {
-            var provider = _config["MeetingTranscript:Provider"];
+            var provider = _config["MeetingTranscript:RealtimeProvider"]
+                ?? _config["MeetingTranscript:Provider"];
             if (string.IsNullOrEmpty(provider))
                 return Task.FromResult(HealthCheckResult.Degraded("Transcript provider not configured"));
 

@@ -22,6 +22,18 @@ param openAiEndpoint string
 @description('AI Search endpoint')
 param aiSearchEndpoint string
 
+@description('Azure Blob Storage service endpoint')
+param blobStorageEndpoint string
+
+@description('Azure AI Speech endpoint')
+param speechEndpoint string
+
+@description('Azure AI Speech region')
+param speechRegion string
+
+@description('Key Vault URI for the Azure AI Speech key')
+param speechKeySecretUri string
+
 @description('Application Insights connection string')
 param appInsightsConnectionString string
 
@@ -118,6 +130,11 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
           keyVaultUrl: 'https://${keyVaultName}${environment().suffixes.keyvaultDns}/secrets/BotAppPassword'
           identity: managedIdentity.id
         }
+        {
+          name: 'speech-service-key'
+          keyVaultUrl: speechKeySecretUri
+          identity: managedIdentity.id
+        }
       ]
     }
     template: {
@@ -144,6 +161,11 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'CosmosDb__Endpoint', value: cosmosDbEndpoint }
             { name: 'AzureOpenAI__Endpoint', value: openAiEndpoint }
             { name: 'AzureAISearch__Endpoint', value: aiSearchEndpoint }
+            { name: 'BlobStorage__Endpoint', value: blobStorageEndpoint }
+            { name: 'Speech__Endpoint', value: speechEndpoint }
+            { name: 'Speech__Key', secretRef: 'speech-service-key' }
+            { name: 'Speech__Region', value: speechRegion }
+            { name: 'TeamsTabAuth__Audience', value: 'api://${botAppId}' }
             { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsightsConnectionString }
             { name: 'AZURE_CLIENT_ID', value: managedIdentity.properties.clientId }
           ]

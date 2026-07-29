@@ -1,13 +1,13 @@
 {
   "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.19/MicrosoftTeams.schema.json",
   "manifestVersion": "1.19",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "id": "e8ce26fe-665b-4e51-bb7b-8483d7bb0f08",
   "developer": {
     "name": "AI Teammate Team",
-    "websiteUrl": "https://github.com/your-org/teams-ai-teammate",
-    "privacyUrl": "https://github.com/your-org/teams-ai-teammate/blob/main/PRIVACY.md",
-    "termsOfUseUrl": "https://github.com/your-org/teams-ai-teammate/blob/main/TERMS.md"
+    "websiteUrl": "https://github.com/TK3214-MS/POC-Teams-AITeammate",
+    "privacyUrl": "https://github.com/TK3214-MS/POC-Teams-AITeammate/blob/main/docs/guides/security.md",
+    "termsOfUseUrl": "https://github.com/TK3214-MS/POC-Teams-AITeammate/blob/main/README.md#%E3%83%A9%E3%82%A4%E3%82%BB%E3%83%B3%E3%82%B9"
   },
   "name": {
     "short": "AI Teammate",
@@ -53,8 +53,13 @@
   ],
   "defaultInstallScope": "meetings",
   "defaultGroupCapability": {
-    "meetings": "tab"
+    "meetings": "bot"
   },
   "permissions": ["identity", "messageTeamMembers"],
+  "devicePermissions": ["media"],
+  "webApplicationInfo": {
+    "id": "e8ce26fe-665b-4e51-bb7b-8483d7bb0f08",
+    "resource": "api://e8ce26fe-665b-4e51-bb7b-8483d7bb0f08"
+  },
   "validDomains": ["aiteammate-dev-mfxwfpuo7stza-app.kinddune-aee006e4.japaneast.azurecontainerapps.io"]
 }

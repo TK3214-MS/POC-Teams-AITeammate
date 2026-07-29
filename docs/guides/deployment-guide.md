@@ -1,5 +1,7 @@
 # AI Teammate デプロイ手順書
 
+> Teams 会議内で Speech dialog、SSO、リアルタイム分析まで確認する場合は、[Teams 実機テストランブック](teams-live-test-runbook.md)を併用してください。
+
 ## 前提条件
 
 - Azure サブスクリプション

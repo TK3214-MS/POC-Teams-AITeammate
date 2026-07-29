@@ -20,6 +20,7 @@ public class TeammateAgent : AgentApplication
     private readonly IKnowledgeRepository _knowledge;
     private readonly ICommandParser _commandParser;
     private readonly IInterventionTimer _interventionTimer;
+    private readonly IAnalysisScheduler _analysisScheduler;
     private readonly IInterventionOrchestrator _interventionOrchestrator;
     private readonly ICardActionHandler _cardActionHandler;
     private readonly ILogger<TeammateAgent> _logger;
@@ -34,6 +35,7 @@ public class TeammateAgent : AgentApplication
         IKnowledgeRepository knowledge,
         ICommandParser commandParser,
         IInterventionTimer interventionTimer,
+        IAnalysisScheduler analysisScheduler,
         IInterventionOrchestrator interventionOrchestrator,
         ICardActionHandler cardActionHandler,
         ILogger<TeammateAgent> logger)
@@ -47,6 +49,7 @@ public class TeammateAgent : AgentApplication
         _knowledge = knowledge;
         _commandParser = commandParser;
         _interventionTimer = interventionTimer;
+        _analysisScheduler = analysisScheduler;
         _interventionOrchestrator = interventionOrchestrator;
         _cardActionHandler = cardActionHandler;
         _logger = logger;
@@ -99,6 +102,7 @@ public class TeammateAgent : AgentApplication
                 if (session is not null)
                 {
                     await _interventionTimer.StopAsync(session.Id, ct);
+                    await _analysisScheduler.StopAsync(session.Id, ct);
                     await _sessionManager.LeaveMeetingAsync(session.Id, ct);
                 }
             }
@@ -181,6 +185,7 @@ public class TeammateAgent : AgentApplication
         if (session is not null)
         {
             await _interventionTimer.StopAsync(session.Id, ct);
+            await _analysisScheduler.StopAsync(session.Id, ct);
             await _sessionManager.LeaveMeetingAsync(session.Id, ct);
 
             var entries = await _transcripts.GetBySessionAsync(session.Id, ct);
@@ -220,7 +225,7 @@ public class TeammateAgent : AgentApplication
 
         var session = await _sessionManager.JoinMeetingAsync(meetingId, tenantId, organizerId, ct);
 
-        // Start intervention timer
+        await _analysisScheduler.StartAsync(session.Id, ct);
         await _interventionTimer.StartAsync(session.Id, new InterventionSettings(), ct);
 
         return "✅ 会議に参加しました。トランスクリプト分析を開始します。\n" +
@@ -410,6 +415,7 @@ public class TeammateAgent : AgentApplication
             return "アクティブなセッションがありません。";
 
         await _interventionTimer.StopAsync(session.Id, ct);
+        await _analysisScheduler.StopAsync(session.Id, ct);
         await _sessionManager.LeaveMeetingAsync(session.Id, ct);
         return "👋 会議から退出しました。蓄積されたナレッジは保存されています。";
     }

@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Button,
   Card,
   CardHeader,
   Text,
@@ -8,6 +9,8 @@ import {
   makeStyles,
   tokens,
 } from '@fluentui/react-components';
+import { Mic24Regular } from '@fluentui/react-icons';
+import { dialog } from '@microsoft/teams-js';
 import { TopicTimeline } from './TopicTimeline';
 import type { ConversationAnalysis, SpeakerStats as SpeakerStatsType } from '../../types';
 import { SpeakerStats } from './SpeakerStats';
@@ -21,13 +24,29 @@ const useStyles = makeStyles({
 interface Props {
   analysis: ConversationAnalysis | null;
   speakerStats: SpeakerStatsType[];
+  meetingId: string | null;
 }
 
-export const AnalysisDashboard: React.FC<Props> = ({ analysis, speakerStats }) => {
+export const AnalysisDashboard: React.FC<Props> = ({ analysis, speakerStats, meetingId }) => {
   const styles = useStyles();
+
+  const openCaptureDialog = () => {
+    if (!meetingId) return;
+    const url = `${window.location.origin}/capture?meetingId=${encodeURIComponent(meetingId)}`;
+    dialog.url.open({ url, size: { height: 560, width: 420 } });
+  };
 
   return (
     <div className={styles.container} data-testid="analysis-dashboard">
+      <Button
+        appearance="primary"
+        icon={<Mic24Regular />}
+        disabled={!meetingId}
+        onClick={openCaptureDialog}
+      >
+        リアルタイム分析を開始
+      </Button>
+
       {/* Summary stats */}
       <div className={styles.statsRow}>
         <Card className={styles.statCard} size="small">

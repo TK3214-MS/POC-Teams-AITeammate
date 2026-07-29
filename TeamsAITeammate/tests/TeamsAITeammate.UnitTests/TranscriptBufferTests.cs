@@ -36,8 +36,8 @@ public class TranscriptBufferTests
         var s1 = MakeSegment("m1", "alice", "Hello", now);
         var s2 = MakeSegment("m1", "bob", "Hi", now.AddSeconds(3));
 
-        await _buffer.AppendAsync(s1);
-        await _buffer.AppendAsync(s2);
+        await _buffer.AppendAsync("m1", s1);
+        await _buffer.AppendAsync("m1", s2);
 
         var window = await _buffer.GetFullConversationAsync("m1");
 
@@ -53,8 +53,8 @@ public class TranscriptBufferTests
         var old = MakeSegment("m1", "alice", "Old", now.AddMinutes(-10));
         var recent = MakeSegment("m1", "bob", "Recent", now.AddSeconds(-30));
 
-        await _buffer.AppendAsync(old);
-        await _buffer.AppendAsync(recent);
+        await _buffer.AppendAsync("m1", old);
+        await _buffer.AppendAsync("m1", recent);
 
         var window = await _buffer.GetRecentWindowAsync("m1", TimeSpan.FromMinutes(2));
 
@@ -66,9 +66,9 @@ public class TranscriptBufferTests
     public async Task GetSpeakerStatsAsync_CorrectStats()
     {
         var now = DateTimeOffset.UtcNow;
-        await _buffer.AppendAsync(MakeSegment("m1", "alice", "One", now, TimeSpan.FromSeconds(3)));
-        await _buffer.AppendAsync(MakeSegment("m1", "alice", "Two", now.AddSeconds(5), TimeSpan.FromSeconds(4)));
-        await _buffer.AppendAsync(MakeSegment("m1", "bob", "Three", now.AddSeconds(10), TimeSpan.FromSeconds(2)));
+        await _buffer.AppendAsync("m1", MakeSegment("m1", "alice", "One", now, TimeSpan.FromSeconds(3)));
+        await _buffer.AppendAsync("m1", MakeSegment("m1", "alice", "Two", now.AddSeconds(5), TimeSpan.FromSeconds(4)));
+        await _buffer.AppendAsync("m1", MakeSegment("m1", "bob", "Three", now.AddSeconds(10), TimeSpan.FromSeconds(2)));
 
         var stats = await _buffer.GetSpeakerStatsAsync("m1");
 
@@ -82,9 +82,9 @@ public class TranscriptBufferTests
     public async Task DetectSilencePeriodsAsync_FindsSilence()
     {
         var now = DateTimeOffset.UtcNow;
-        await _buffer.AppendAsync(MakeSegment("m1", "alice", "Before", now, TimeSpan.FromSeconds(2)));
+        await _buffer.AppendAsync("m1", MakeSegment("m1", "alice", "Before", now, TimeSpan.FromSeconds(2)));
         // 60 second gap
-        await _buffer.AppendAsync(MakeSegment("m1", "bob", "After", now.AddSeconds(62), TimeSpan.FromSeconds(2)));
+        await _buffer.AppendAsync("m1", MakeSegment("m1", "bob", "After", now.AddSeconds(62), TimeSpan.FromSeconds(2)));
 
         var silences = await _buffer.DetectSilencePeriodsAsync("m1", TimeSpan.FromSeconds(30));
 
@@ -96,8 +96,8 @@ public class TranscriptBufferTests
     public async Task DetectSilencePeriodsAsync_NoSilence_WhenContinuous()
     {
         var now = DateTimeOffset.UtcNow;
-        await _buffer.AppendAsync(MakeSegment("m1", "alice", "One", now, TimeSpan.FromSeconds(3)));
-        await _buffer.AppendAsync(MakeSegment("m1", "bob", "Two", now.AddSeconds(3), TimeSpan.FromSeconds(3)));
+        await _buffer.AppendAsync("m1", MakeSegment("m1", "alice", "One", now, TimeSpan.FromSeconds(3)));
+        await _buffer.AppendAsync("m1", MakeSegment("m1", "bob", "Two", now.AddSeconds(3), TimeSpan.FromSeconds(3)));
 
         var silences = await _buffer.DetectSilencePeriodsAsync("m1", TimeSpan.FromSeconds(5));
 
@@ -116,8 +116,8 @@ public class TranscriptBufferTests
     public async Task ConversationWindow_ToFormattedTranscript_FormatsCorrectly()
     {
         var now = new DateTimeOffset(2025, 7, 1, 10, 30, 0, TimeSpan.Zero);
-        await _buffer.AppendAsync(MakeSegment("m1", "Alice", "Hello everyone", now));
-        await _buffer.AppendAsync(MakeSegment("m1", "Bob", "Hi Alice", now.AddSeconds(3)));
+        await _buffer.AppendAsync("m1", MakeSegment("m1", "Alice", "Hello everyone", now));
+        await _buffer.AppendAsync("m1", MakeSegment("m1", "Bob", "Hi Alice", now.AddSeconds(3)));
 
         var window = await _buffer.GetFullConversationAsync("m1");
         var formatted = window.ToFormattedTranscript();
@@ -130,9 +130,9 @@ public class TranscriptBufferTests
     public async Task GetFullConversation_DetectsLanguage()
     {
         var now = DateTimeOffset.UtcNow;
-        await _buffer.AppendAsync(MakeSegment("m1", "alice", "Hello", now, language: "en-US"));
-        await _buffer.AppendAsync(MakeSegment("m1", "bob", "こんにちは", now.AddSeconds(3), language: "ja-JP"));
-        await _buffer.AppendAsync(MakeSegment("m1", "alice", "テスト", now.AddSeconds(6), language: "ja-JP"));
+        await _buffer.AppendAsync("m1", MakeSegment("m1", "alice", "Hello", now, language: "en-US"));
+        await _buffer.AppendAsync("m1", MakeSegment("m1", "bob", "こんにちは", now.AddSeconds(3), language: "ja-JP"));
+        await _buffer.AppendAsync("m1", MakeSegment("m1", "alice", "テスト", now.AddSeconds(6), language: "ja-JP"));
 
         var window = await _buffer.GetFullConversationAsync("m1");
 
@@ -143,8 +143,8 @@ public class TranscriptBufferTests
     public async Task MultipleSessions_IndependentBuffers()
     {
         var now = DateTimeOffset.UtcNow;
-        await _buffer.AppendAsync(MakeSegment("m1", "alice", "Meeting 1", now));
-        await _buffer.AppendAsync(MakeSegment("m2", "bob", "Meeting 2", now));
+        await _buffer.AppendAsync("m1", MakeSegment("m1", "alice", "Meeting 1", now));
+        await _buffer.AppendAsync("m2", MakeSegment("m2", "bob", "Meeting 2", now));
 
         var w1 = await _buffer.GetFullConversationAsync("m1");
         var w2 = await _buffer.GetFullConversationAsync("m2");

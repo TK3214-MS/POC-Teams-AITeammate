@@ -1,0 +1,13 @@
+[     710ms] [WARNING] Manifest: property 'url' ignored, should be within scope of the manifest. @ https://teams.microsoft.com/v2/manifest.json:0
+[     710ms] [WARNING] Manifest: protocol_handlers entry ignored, required property 'url' is invalid. @ https://teams.microsoft.com/v2/manifest.json:0
+[     783ms] [LOG] [ExpLoader] Getting things ready... @ https://teams.microsoft.com/v2/:14
+[     786ms] [WARNING] [ExpLoader] ExperienceLoader: OCDI redirect: Not redirecting - not enabled @ https://teams.microsoft.com/v2/:14
+[    2243ms] [INFO] Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner. @ https://teams.microsoft.com/v2/:0
+[    2651ms] [LOG] [Auth]: auth_cache initialized @ https://teams.microsoft.com/v2/:14
+[    2651ms] [LOG] [Auth]: authTelemetryProvider initialized @ https://teams.microsoft.com/v2/:14
+[    2652ms] [LOG] [Auth]: [Telemetry][6408bbb6-de5b-4060-bf31-bdbe4cdf4162][auth_web_initialization] [start] - telemetry provider created for createAuthenticationServiceInstance, source: core-auth-tasks::init with shouldCreateScenario: [true] @ https://teams.microsoft.com/v2/:14
+[    2740ms] [ERROR] Unhandled error/rejection {"isTrusted":true} @ https://teams.microsoft.com/v2/:14
+[    2802ms] [WARNING] An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing. @ https://teams.public.onecdn.static.microsoft/teams-modular-packages/hashed-assets/32990-231644c8e56b0850.js:0
+[    4052ms] [WARNING] An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing. @ https://teams.microsoft.com/v2/authv2#error=interaction_required&error_description=AADSTS16000%3a+Either+multiple+user+identities+are+available+for+the+current+request+or+selected+account+is+not+supported+for+the+scenario.+Trace+ID%3a+8e4b9bb0-8b0a-47e8-a08f-169a47141500+Correlation+ID%3a+2d18981c-b866-4a14-8f4c-8fa9077bb531+Timestamp%3a+2026-07-29+13%3a44%3a45Z&error_uri=https%3a%2f%2flogin.microsoftonline.com%2ferror%3fcode%3d16000&state=eyJpZCI6IjAxOWZhZTFlLWNkNmMtNzQ5Mi1iNjY5LTM3Y2IzOTIxOGIyMyIsIm1ldGEiOnsiaW50ZXJhY3Rpb25UeXBlIjoic2lsZW50In19&clientdata=e%7c16000%7c%7cmicrosoftonline.com%7cnone:0
+[    7792ms] [LOG] true @ https://login.live.com/Me.htm?v=3:0
+[    7792ms] [LOG] Storage access: true @ https://login.live.com/Me.htm?v=3:0

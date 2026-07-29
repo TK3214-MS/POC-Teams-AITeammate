@@ -4,7 +4,7 @@ namespace TeamsAITeammate.Core.Interfaces;
 
 public interface ITranscriptBuffer
 {
-    Task AppendAsync(TranscriptSegment segment, CancellationToken ct = default);
+    Task AppendAsync(string sessionId, TranscriptSegment segment, CancellationToken ct = default);
 
     Task<ConversationWindow> GetRecentWindowAsync(
         string sessionId,

@@ -1,0 +1,55 @@
+{
+  "name": "knowledge-index",
+  "fields": [
+    { "name": "Id", "type": "Edm.String", "key": true, "searchable": false, "filterable": true },
+    { "name": "TenantId", "type": "Edm.String", "searchable": false, "filterable": true },
+    { "name": "MeetingId", "type": "Edm.String", "searchable": false, "filterable": true },
+    { "name": "SessionId", "type": "Edm.String", "searchable": false, "filterable": true },
+    { "name": "Title", "type": "Edm.String", "searchable": true },
+    { "name": "Content", "type": "Edm.String", "searchable": true },
+    { "name": "Summary", "type": "Edm.String", "searchable": true },
+    { "name": "Category", "type": "Edm.String", "searchable": false, "filterable": true },
+    { "name": "Status", "type": "Edm.String", "searchable": false, "filterable": true },
+    { "name": "SourceSpeaker", "type": "Edm.String", "searchable": true },
+    { "name": "MeetingSubject", "type": "Edm.String", "searchable": true },
+    { "name": "MeetingDate", "type": "Edm.DateTimeOffset", "searchable": false, "filterable": true, "sortable": true },
+    { "name": "Language", "type": "Edm.String", "searchable": false, "filterable": true },
+    { "name": "Tags", "type": "Collection(Edm.String)", "searchable": true, "filterable": true },
+    { "name": "Confidence", "type": "Edm.Double", "searchable": false, "filterable": true, "sortable": true },
+    { "name": "CreatedAt", "type": "Edm.DateTimeOffset", "searchable": false, "filterable": true, "sortable": true },
+    { "name": "UpdatedAt", "type": "Edm.DateTimeOffset", "searchable": false, "filterable": true, "sortable": true },
+    {
+      "name": "ContentVector",
+      "type": "Collection(Edm.Single)",
+      "searchable": true,
+      "dimensions": 3072,
+      "vectorSearchProfile": "knowledge-vector-profile"
+    }
+  ],
+  "vectorSearch": {
+    "algorithms": [
+      { "name": "knowledge-hnsw", "kind": "hnsw" }
+    ],
+    "profiles": [
+      { "name": "knowledge-vector-profile", "algorithm": "knowledge-hnsw" }
+    ]
+  },
+  "semantic": {
+    "configurations": [
+      {
+        "name": "knowledge-semantic-config",
+        "prioritizedFields": {
+          "titleField": { "fieldName": "Title" },
+          "prioritizedContentFields": [
+            { "fieldName": "Content" },
+            { "fieldName": "Summary" }
+          ],
+          "prioritizedKeywordsFields": [
+            { "fieldName": "Tags" },
+            { "fieldName": "Category" }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -27,6 +27,9 @@ param openAiFallbackDeploymentName string = 'gpt-54-mini'
 var prefix = 'aiteammate'
 var resourceName = '${prefix}-${environmentName}-${resourceSuffix}'
 var containerRegistryName = replace('${prefix}${environmentName}${resourceSuffix}', '-', '')
+var keyVaultName = '${prefix}kv${environmentName}${take(resourceSuffix, 8)}'
+var speechAccountName = '${resourceName}-speech'
+var storageAccountName = 'aitmst${environmentName}${take(resourceSuffix, 8)}'
 
 // ---------- Modules ----------
 
@@ -41,7 +44,7 @@ module appInsights 'modules/app-insights.bicep' = {
 module keyVault 'modules/key-vault.bicep' = {
   name: 'key-vault'
   params: {
-    name: '${prefix}kv${environmentName}${take(resourceSuffix, 8)}'
+    name: keyVaultName
     location: location
     botAppPassword: botAppPassword
   }
@@ -73,6 +76,39 @@ module aiSearch 'modules/ai-search.bicep' = {
   }
 }
 
+module storage 'modules/storage.bicep' = {
+  name: 'storage'
+  params: {
+    name: storageAccountName
+    location: location
+  }
+}
+
+resource speech 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
+  name: speechAccountName
+  location: location
+  kind: 'SpeechServices'
+  sku: {
+    name: 'S0'
+  }
+  properties: {
+    customSubDomainName: speechAccountName
+    publicNetworkAccess: 'Enabled'
+  }
+}
+
+resource deployedKeyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
+  name: keyVaultName
+}
+
+resource speechKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: deployedKeyVault
+  name: 'SpeechServiceKey'
+  properties: {
+    value: speech.listKeys().key1
+  }
+}
+
 module containerApp 'modules/container-app.bicep' = {
   name: 'container-app'
   params: {
@@ -84,6 +120,10 @@ module containerApp 'modules/container-app.bicep' = {
     cosmosDbEndpoint: cosmosDb.outputs.endpoint
     openAiEndpoint: openAi.outputs.endpoint
     aiSearchEndpoint: aiSearch.outputs.endpoint
+    blobStorageEndpoint: storage.outputs.blobEndpoint
+    speechEndpoint: speech.properties.endpoint
+    speechRegion: location
+    speechKeySecretUri: speechKeySecret.properties.secretUriWithVersion
     appInsightsConnectionString: appInsights.outputs.connectionString
   }
 }
@@ -102,11 +142,59 @@ resource cosmosDataContributor 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAss
   }
 }
 
+resource deployedStorageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
+  name: storageAccountName
+}
+
+resource deployedAppIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
+  name: '${resourceName}-app-identity'
+}
+
+resource storageBlobDataContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(deployedStorageAccount.id, deployedAppIdentity.id, 'storage-blob-data-contributor')
+  scope: deployedStorageAccount
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
+    principalId: containerApp.outputs.identityPrincipalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource deployedOpenAi 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {
+  name: '${resourceName}-openai'
+}
+
+resource openAiUser 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(deployedOpenAi.id, deployedAppIdentity.id, 'cognitive-services-openai-user')
+  scope: deployedOpenAi
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')
+    principalId: containerApp.outputs.identityPrincipalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource deployedAiSearch 'Microsoft.Search/searchServices@2024-06-01-preview' existing = {
+  name: '${resourceName}-search'
+}
+
+resource searchIndexDataContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(deployedAiSearch.id, deployedAppIdentity.id, 'search-index-data-contributor')
+  scope: deployedAiSearch
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '8ebe5a00-799e-43f5-93ac-243d3dce84a7')
+    principalId: containerApp.outputs.identityPrincipalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 // ---------- Outputs ----------
 output containerAppFqdn string = containerApp.outputs.fqdn
 output cosmosDbEndpoint string = cosmosDb.outputs.endpoint
 output openAiEndpoint string = openAi.outputs.endpoint
 output aiSearchEndpoint string = aiSearch.outputs.endpoint
+output blobStorageEndpoint string = storage.outputs.blobEndpoint
+output speechEndpoint string = speech.properties.endpoint
 output keyVaultUri string = keyVault.outputs.uri
 output appInsightsConnectionString string = appInsights.outputs.connectionString
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerApp.outputs.containerRegistryEndpoint

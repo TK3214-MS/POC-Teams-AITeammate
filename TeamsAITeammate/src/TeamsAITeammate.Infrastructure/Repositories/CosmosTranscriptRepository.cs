@@ -22,7 +22,7 @@ public class CosmosTranscriptRepository : ITranscriptRepository
 
     public async Task AddAsync(TranscriptEntry entry, CancellationToken ct = default)
     {
-        await _container.CreateItemAsync(entry, new PartitionKey(entry.SessionId), cancellationToken: ct);
+        await _container.UpsertItemAsync(entry, new PartitionKey(entry.SessionId), cancellationToken: ct);
     }
 
     public async Task<IReadOnlyList<TranscriptEntry>> GetBySessionAsync(string sessionId, CancellationToken ct = default)

@@ -2,12 +2,25 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Net;
 using TeamsAITeammate.Infrastructure.Services;
 
 namespace TeamsAITeammate.UnitTests;
 
 public class HealthCheckTests
 {
+    [Fact]
+    public async Task AzureOpenAIHealthCheck_WhenEndpointReturnsNotFound_ReturnsHealthy()
+    {
+        var config = CreateConfig(new Dictionary<string, string?> { ["AzureOpenAI:Endpoint"] = "https://openai.test" });
+        var check = new AzureOpenAIHealthCheck(config, new StubHttpClientFactory(HttpStatusCode.NotFound),
+            Mock.Of<ILogger<AzureOpenAIHealthCheck>>());
+
+        var result = await check.CheckHealthAsync(CreateContext());
+
+        Assert.Equal(HealthStatus.Healthy, result.Status);
+    }
+
     [Fact]
     public async Task CosmosDBHealthCheck_WithEndpoint_ReturnsHealthy()
     {
@@ -77,13 +90,13 @@ public class HealthCheckTests
     [Fact]
     public async Task TranscriptProviderHealthCheck_WithProvider_ReturnsHealthy()
     {
-        var config = CreateConfig(new Dictionary<string, string?> { ["MeetingTranscript:Provider"] = "WorkIQ" });
+        var config = CreateConfig(new Dictionary<string, string?> { ["MeetingTranscript:RealtimeProvider"] = "ClientSpeech" });
         var check = new TranscriptProviderHealthCheck(config, Mock.Of<ILogger<TranscriptProviderHealthCheck>>());
 
         var result = await check.CheckHealthAsync(CreateContext());
 
         Assert.Equal(HealthStatus.Healthy, result.Status);
-        Assert.Contains("WorkIQ", result.Description);
+        Assert.Contains("ClientSpeech", result.Description);
     }
 
     [Fact]
@@ -108,4 +121,16 @@ public class HealthCheckTests
     {
         Registration = new HealthCheckRegistration("test", Mock.Of<IHealthCheck>(), null, null)
     };
+
+    private sealed class StubHttpClientFactory(HttpStatusCode statusCode) : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name) => new(new StubHttpMessageHandler(statusCode));
+    }
+
+    private sealed class StubHttpMessageHandler(HttpStatusCode statusCode) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(statusCode));
+    }
 }

@@ -419,7 +419,9 @@ cp appPackage/color.png appPackage/outline.png "$PACKAGE_DIR/"
 )
 ```
 
-> 現在のAgentホストは `/configure` でSidePanelを配信しません。Botのみを検証する場合はパッケージをインストールしてチャットを使用できます。会議SidePanelを利用するには、SidePanelのビルド成果物を別途ホストし、`configurationUrl` と `validDomains` をそのホストへ変更してください。
+> 現在の Dockerfile は SidePanel をビルドして Agent ホストの `wwwroot` へ配置します。`/configure`、`/sidepanel`、`/capture` は同じ Container App から配信されるため、`configurationUrl` と `validDomains` には Container App の FQDN を使用します。
+
+Speech dialog と Teams SSO を含む会議内の実機確認は、[Teams 実機テストランブック](guides/teams-live-test-runbook.md)を参照してください。
 
 Teamsで「アプリ」→「アプリを管理」→「アプリをアップロード」から `ai-teammate-app.zip` をアップロードします。
 
